@@ -189,7 +189,6 @@ class ClMiner(dict):
         while self.pend_clos:
             """
             Yield next closure and handle extensions.
-            CAVEAT: IFace.running condition still fully untested.
             """
             clos = heappop(self.pend_clos)
             pclos = set(clos)  # mutable copy of contents
@@ -283,26 +282,26 @@ if __name__ == "__main__":
     # ~ from time import time
     from hyperparam import HyperParam
 
-    fnm = "markbask"
+    # ~ fnm = "markbask"
 
-    # ~ fnm = "../data/lenses_recoded"
-    # ~ fnm = "../data/toy"
-    # ~ fnm = "../data/ect24.td"
-    # ~ fnm = "../data/e24.td"
-    # ~ fnm = "../data/e24t.td"
-    # ~ fnm = "../data/e13"
-    # ~ fnm = "../data/e5b"
-    # ~ fnm = "../data/e13a"
-    # ~ fnm = "../data/e13b"
-    # ~ fnm = "../data/adultrain"
-    # ~ fnm = "../data/cmc-full"
+    # ~ fnm = "lenses_recoded"
+    # ~ fnm = "toy"
+    fnm = "ect24.td"
+    # ~ fnm = "e24.td"
+    # ~ fnm = "e24t.td"
+    # ~ fnm = "e13"
+    # ~ fnm = "e5b"
+    # ~ fnm = "e13a"
+    # ~ fnm = "e13b"
+    # ~ fnm = "adultrain"
+    # ~ fnm = "cmc-full"
     # The next work thanks to the limit on the total support set lengths / NOT IMPLEMENTED ANYMORE
-    # ~ fnm = "../data/chess.td"   # Fills memory with small heap size
-    # ~ fnm = "../data/connect.td" # Fills memory with ridiculous heap
+    # ~ fnm = "chess.td"   # Fills memory with small heap size
+    # ~ fnm = "connect.td" # Fills memory with ridiculous heap
                                    # size and less than 5000 closures
-    # ~ fnm = "../data/mushroomTr" 
-    # ~ fnm = "../data/votesTr" 
-    # ~ fnm = "../data/papersTr" # FILLS 15GB MEMORY ANYHOW EVEN WITH THE TOTAL SUPPORT SET LENGTHS LIMIT
+    # ~ fnm = "mushroomTr" 
+    # ~ fnm = "votesTr" 
+    # ~ fnm = "papersTr" # FILLS 15GB MEMORY ANYHOW EVEN WITH THE TOTAL SUPPORT SET LENGTHS LIMIT
 
     if fnm.endswith('.td') or fnm.endswith('.txt'):
         filenamefull = fnm
@@ -320,6 +319,7 @@ if __name__ == "__main__":
         exit(1)
 
     hpar = HyperParam()
+    print("Reading in dataset from file", filenamefull)
     d = Dataset(datafile, hpar)
 
     # ~ miner = ClMiner(d, 0.084)
