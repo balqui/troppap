@@ -300,7 +300,7 @@ if __name__ == "__main__":
     # ~ fnm = "connect.td"
     # ~ fnm = "mushroomTr" 
     # ~ fnm = "votesTr" 
-    # ~ fnm = "NOW" 
+    fnm = "NOW" 
     # ~ fnm = "papersTr"
 
     if fnm.endswith('.td') or fnm.endswith('.txt'):
