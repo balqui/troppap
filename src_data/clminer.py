@@ -282,26 +282,26 @@ if __name__ == "__main__":
     # ~ from time import time
     from hyperparam import HyperParam
 
-    # ~ fnm = "markbask"
-
     # ~ fnm = "lenses_recoded"
+    # ~ fnm = "markbask"
     # ~ fnm = "toy"
-    fnm = "ect24.td"
+    # ~ fnm = "ect24.td"
     # ~ fnm = "e24.td"
     # ~ fnm = "e24t.td"
     # ~ fnm = "e13"
     # ~ fnm = "e5b"
     # ~ fnm = "e13a"
     # ~ fnm = "e13b"
+
+    # ~ fnm = "supermarketTr"
     # ~ fnm = "adultrain"
     # ~ fnm = "cmc-full"
-    # The next work thanks to the limit on the total support set lengths / NOT IMPLEMENTED ANYMORE
-    # ~ fnm = "chess.td"   # Fills memory with small heap size
-    # ~ fnm = "connect.td" # Fills memory with ridiculous heap
-                                   # size and less than 5000 closures
+    # ~ fnm = "chess.td"
+    # ~ fnm = "connect.td"
     # ~ fnm = "mushroomTr" 
     # ~ fnm = "votesTr" 
-    # ~ fnm = "papersTr" # FILLS 15GB MEMORY ANYHOW EVEN WITH THE TOTAL SUPPORT SET LENGTHS LIMIT
+    # ~ fnm = "NOW" 
+    # ~ fnm = "papersTr"
 
     if fnm.endswith('.td') or fnm.endswith('.txt'):
         filenamefull = fnm
@@ -322,17 +322,12 @@ if __name__ == "__main__":
     print("Reading in dataset from file", filenamefull)
     d = Dataset(datafile, hpar)
 
-    # ~ miner = ClMiner(d, 0.084)
-    # ~ miner = ClMiner(d, 0.75)
-    # ~ miner = ClMiner(d, 3/24)
     # ~ import time
     miner = ClMiner(d, hpar, 0)
-    # ~ print("Int support:", miner.intsupp)
     lcl = list()
     # ~ t0 = time.time()
     for cl in miner.mine_closures():
         lcl.append(cl)
-        # ~ if miner.card > IFace.hpar.clos_num_limit:
         # ~ if len(lcl) == 2000:
             # ~ break
         # ~ print(cl)
