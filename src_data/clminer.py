@@ -14,7 +14,7 @@ CAVEAT: MUST REVIEW SEVERAL THINGS MARKED "CAVEAT".
 """
 
 
-from iface import IFace
+# ~ from iface import IFace
 from itset import ItSet
 from dataset import Dataset
 
@@ -50,18 +50,18 @@ class ClMiner(dict):
     generator of course to be called from Lattice.
     """
 
-    def __init__(self, dataset, supp=-1):
+    def __init__(self, dataset, hpar, supp=-1):
         super().__init__()
         self.dataset = dataset
+        self.hpar = hpar
         if supp > -1:
             self.intsupp = int(supp * dataset.nrtr)
         else:
             self.intsupp = IFace.hpar.genabsupp
         self.card = 0
         self.totlen = 0
-        self.iface = IFace()
         self.pend_clos = list()
-        self.mem_tester = Test_Memory(IFace.hpar.nrits)
+        self.mem_tester = Test_Memory(hpar.nrits)
         
         # ~ self.ctr = Counter()
 
@@ -128,11 +128,11 @@ class ClMiner(dict):
             # ~ """
         incr_supp = False
         if self.mem_tester.too_much_mem():
-            IFace.report("Too high memory usage: " + 
+            print("Too high memory usage: " + 
                 "increasing support threshold.")
             incr_supp = True
-        if len(self.pend_clos) > IFace.hpar.pend_len_limit:
-            IFace.report("Too many pending closures: " + 
+        if len(self.pend_clos) > self.hpar.pend_len_limit:
+            print("Too many pending closures: " + 
                 "increasing support threshold.")
             incr_supp = True
         if incr_supp:
@@ -168,7 +168,6 @@ class ClMiner(dict):
     def mine_closures(self):
         "As per the Troppus algorithm"
 
-        IFace.report("Memory control on closure miner via psutil.")
         closempty = set()
         sorteditems = list()
 
@@ -187,7 +186,7 @@ class ClMiner(dict):
 
         report_it = False
         self.minsupp = self.dataset.nrtr
-        while self.pend_clos and self.iface.running:
+        while self.pend_clos:
             """
             Yield next closure and handle extensions.
             CAVEAT: IFace.running condition still fully untested.
@@ -199,22 +198,22 @@ class ClMiner(dict):
             self.card += 1
             yield clos
 
-            if self.card % IFace.hpar.check_size_often == 0:
+            if self.card % self.hpar.check_size_often == 0:
                 "Consider raising support."
                 new_supp = self.test_size()
                 if new_supp > self.intsupp:
                     "support bound grew, heap halved, report"
-                    IFace.report(
+                    print(
                       f"Increased minimum support from {self.intsupp} "
                       + f"({self.intsupp*100/self.dataset.nrtr:5.3f}%) "
                       + f"up to {new_supp} " 
                       + f"({new_supp*100/self.dataset.nrtr:5.3f}%).")
                     self.intsupp = new_supp
                     report_it = True
-            if self.card % IFace.hpar.report_often == 0 or report_it:
+            if self.card % self.hpar.report_often == 0 or report_it:
                 "Just report."
                 report_it = False
-                IFace.report(
+                print(
                   f"{self.card} closures traversed, " +
                   f"{len(self.pend_clos)} further closures " +
                   f"found so far; current support {clos.supp}.")
@@ -281,11 +280,10 @@ class ClMiner(dict):
 
 if __name__ == "__main__":
 
-    from filenames import FileNames
+    # ~ from time import time
     from hyperparam import HyperParam
-    from time import time
 
-    fnm = "../data/markbask"
+    fnm = "markbask"
 
     # ~ fnm = "../data/lenses_recoded"
     # ~ fnm = "../data/toy"
@@ -306,16 +304,29 @@ if __name__ == "__main__":
     # ~ fnm = "../data/votesTr" 
     # ~ fnm = "../data/papersTr" # FILLS 15GB MEMORY ANYHOW EVEN WITH THE TOTAL SUPPORT SET LENGTHS LIMIT
 
-    IFace.hpar = HyperParam()
-    IFace.fn = FileNames(IFace)
-    IFace.opendatafile(fnm)
-    d = Dataset()
+    if fnm.endswith('.td') or fnm.endswith('.txt'):
+        filenamefull = fnm
+        filename, _ = fnm.rsplit('.',1)
+    else:
+        filename = fnm
+        filenamefull = fnm + ".txt" # of ".td" one day...
+
+    try:
+        datafile = open(filenamefull)
+        assert datafile._checkReadable()
+        print("File is now open.")
+    except (IOError, OSError, AssertionError):
+        print("Nonexistent or unreadable file.")
+        exit(1)
+
+    hpar = HyperParam()
+    d = Dataset(datafile, hpar)
 
     # ~ miner = ClMiner(d, 0.084)
     # ~ miner = ClMiner(d, 0.75)
     # ~ miner = ClMiner(d, 3/24)
     # ~ import time
-    miner = ClMiner(d, 0)
+    miner = ClMiner(d, hpar, 0)
     # ~ print("Int support:", miner.intsupp)
     lcl = list()
     # ~ t0 = time.time()
@@ -342,53 +353,3 @@ if __name__ == "__main__":
         # ~ print(cl)
 
 
-
-
-    # ~ a = set(['D', 'E'])
-    # ~ print("Closure of", a, "is", miner.close(a))
-
-
-
-    # ~ print("In dict:")
-    # ~ for fs in miner:
-        # ~ if miner[fs].supp == 0:
-            # ~ print(fs, miner[fs])
-
-
-# Reporting and support increase fragments from V1.*, PROBABLY TO REMOVE
-            # ~ new_supp = test_size(pend_clos)
-            # ~ if new_supp > self.intsupp:
-                # ~ "support bound grows, heap halved, report"
-                # ~ IFace.report("Increasing min support from " +
-                             # ~ str(self.intsupp) +
-                             # ~ (" (%2.3f%%) up to " %
-                              # ~ self.to_percent(self.intsupp)) +
-                             # ~ str(new_supp) +
-                             # ~ (" (%2.3f%%)" %
-                              # ~ self.to_percent(new_supp)) + 
-                            # ~ ".")
-                # ~ IFace.hpar.please_report = True
-                # ~ self.intsupp = new_supp
-            # ~ if spp < self.intsupp:
-                # ~ "maybe intsupp has grown in the meantime (neg border)"
-                # ~ break
-            # ~ if spp < self.minsupp:
-                # ~ self.minsupp = spp
-            # ~ if (IFace.hpar.verbose or IFace.hpar.please_report or 
-                # ~ self.card % IFace.hpar.supp_rep_often == 0):
-                # ~ IFace.hpar.please_report = False
-                # ~ IFace.report(str(self.card) +
-                            # ~ " closures traversed, " +
-                               # ~ str(len(pend_clos)) + 
-                            # ~ " further closures found so far; current support " +
-                            # ~ str(spp) + ".")
-
-        # ~ This leads to wrong answers in the linear search attempt,
-        # ~ took them out, now putting them back in.
-        # ~ for clos in self.values():
-            # ~ "linear search - TAKEN OUT, several points add to the dict and arrival order is not yield order"
-            # ~ if fst <= clos:
-                # ~ "dict order: largest-support closure containing fst"
-                # ~ self[fst] = clos
-                # ~ return clos
-        # ~ "or fall back on dataset - which is slower?"
