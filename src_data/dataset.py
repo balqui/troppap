@@ -27,10 +27,10 @@ class Dataset:
         hpar.nrtr = self.nrtr
         hpar.nrits = self.nrits
         datafile.close()
-        print("Dataset read in. Consists of " +
-            str(self.nrtr) + " transactions from among " +
-            str(self.nrits) + " different items, with a total of " +
-            str(self.nrocc) + " item occurrences.")
+        # ~ print("Dataset read in. Consists of " +
+            # ~ str(self.nrtr) + " transactions from among " +
+            # ~ str(self.nrits) + " different items, with a total of " +
+            # ~ str(self.nrocc) + " item occurrences.")
 
     def inters(self, lstr):
         "for iterable of transactions lstr, return their intersection"
