@@ -6,85 +6,13 @@ Current revision: late Pluviose 2025
 Author: Jose Luis Balcazar, ORCID 0000-0003-4248-4528 
 Copyleft: MIT License (https://en.wikipedia.org/wiki/MIT_License)
 
-CAVEAT: Must simplify a lot the docstrings and clean up the code.
-
-Careful: a hash is defined to use ItSet's as set members and 
-dict keys; ItSet should be handled always as immutable even though
-the program does not control that instances don't change.
-
-REST OF DOCSTRING TO MOVE SOMEWHERE ELSE.
-
-An early idea was, at some point, to move to a simplified version 
-where we only keep contents and supp, forgetting supportset and 
-suppratio and giving they back to the garbage collector once they 
-have fulfilled their roles. But I cannot do that, since supportsets 
-are needed to compute closures of nonclosed itemsets appearing later 
-as eg mingens or differences between consequents and antecedents.
-
-History:
-
-Programmed as
-class ItSet(frozenset) 
-until Nivose 2025.
-
-Itemsets were frozensets so that they can index dicts;
-initially they had supp, later moved off to a dict in Lattice.
-(12/2024) Unclear what difference is relevant beyond a custom
-__str__ but will keep the class around anyhow for the time being.
-
-(Jan/2025)
-Next goal is to use them, essentially, as heap elements so that
-the standard heapq library can be employed at face falue, thus
-getting rid of FlHeap and yaFlHeap.
-For this, they need to include their own support and also a
-tie-breaking component to make sure that the heap never compares
-the sets themselves.
-First idea was to change the sign of the support so that the heaps
-work as max-heaps but current decision is to hide that into custom
-comparisons.
-Moreover, we need to compare ItSets according to two orderings,
-support-based for the heap and mere subset order. We customize
-"<" as support-based order for the heap but leave "<=" inherited
-from frozenset so that it has the standard meaning. At some point
-in time I had customized instead the "shift" operator "<<" to mean 
-subset-or-equal but not anymore.
-
-Also: inheriting from frozenset does not work, since init requires
-two parameters but somehow the instantiation mandates only one and
-both one and two parameters raise errors. (Probably something to
-do with __new__, maybe will try to find out some day.)
-
-In Lattice I need to intersect ItSet's and use the outcome to index
-a dict. I could give ItSet an intersect method but it would have to
-construct unions of the lists of transactions, and it is unclear 
-that this is needed. For the time being, I take them down to frozensets
-at the time of intersecting.
-
-Consider migrating it into a frozen dataclass - TRIED but couldn't
-make it work, see file in scaff folder.
-
-Old:
-
-def __init__(self, contents=[], supp = float("inf")):
-    frozenset.__init__(self, contents)
-    did not work with Python 2 nor 3, and
-    super().__init__(self, contents)
-    did not work either.
-    Programmed as
-    self = frozenset(contents)
-
-def __str__(self):
-    prettyprint of itemset: CAVEAT: add support if nonzero?
-    return "{ " + ', '.join( str(trad[el]) if el in trad else str(el)
-                          for el in sorted(self) ) + " }"
-if __name__=="__main__":
-    print(ItSet(range(5)))
-
-Had a version in @dataclass form, but required looking up
-the contents field to operate and I decided to get back to
-inheriting from set (try not no use frozensets initially
-as they are no longer to index the supports dict in lattice...
-but they index other dict's and belong to other set's).
+Careful: 
+(1) A hash is defined to use ItSet's as set members and 
+dict keys; ItSet should be handled always as immutable 
+even though the program does not control that instances 
+don't change.
+(2) Comparison <= redefined to be support-based instead 
+of set inclusion.
 """
 
 class ItSet(set):
@@ -134,14 +62,6 @@ class ItSet(set):
         return (self.supp > other.supp or
                 self.supp == other.supp and self._break_tie(other))
 
-    # ~ def __lshift__(self, other):
-        # ~ """
-        # ~ Use "<<" instead to compare ItSet's according to inclusion
-        # ~ order on the contents.
-        # ~ UNNECESSARY. USE STANDARD <= INSTEAD.
-        # ~ """
-        # ~ return set(self) <= set(other)
-
 
     def __hash__(self):
         """
@@ -156,14 +76,9 @@ class ItSet(set):
                        ' } [' +  str(self.supp) + ']')
 
 
-    def fullstr(self):
-        s = '[X]' if self.supportset is None else str(sorted(self.supportset))
-        return str(self) + ' / ' + s
-
-# ~ CAN WE DO WITHOUT? WOULD REQUIRE A SEARCH ON THE CLOSURES TO FIND SUPPORT
-    # ~ def difference(self, anything):
-        # ~ "returns a plain set, not an ItSet, as we lack supp"
-        # ~ return self - set(anything)
+    # ~ def fullstr(self):
+        # ~ s = '[X]' if self.supportset is None else str(sorted(self.supportset))
+        # ~ return str(self) + ' / ' + s
 
 
 if __name__ == "__main__":

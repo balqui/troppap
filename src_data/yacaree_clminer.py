@@ -6,125 +6,96 @@ Its main method is the iterator that provides, one by one,
  in order of decreasing support, all the closures for a given
  dataset and support bound
  
-handle the neg border:
- find max non support
- allows us to set correct value to the support ratios of the
-  maximal sets
- consider sending the neg border from this iterator and
-  handling these issues in lattice
-
 """
 
-from math import floor
+# ~ from math import floor
 
-import statics
 from itset import ItSet
 from dataset import Dataset
-from yaflheap import FlHeap
+from heapq import heappush, heappop
+# ~ from yaflheap import FlHeap
 
 class ClMiner:
 
-    def __init__(self,dataset,supp=-1):
-        """
-        may receive an external support bound in (0,1]
-        otherwise, resort to statics.genabsupp - most often,
-        this is used - usage is always "supp > intsupp"
-        with a proper inequality
-        self.intsupp is again the evolving support bound,
-        scaled into int in [0,dataset.nrtr]
-        initializes other quantities and finds closures of
-        singletons
-        """
+    def __init__(self, dataset, hpar):
+        "Some inherited fields are likely to be unnecessary here"
         self.dataset = dataset
-        if supp > -1:
-            self.intsupp = int(supp * dataset.nrtr)
-        else:
-            self.intsupp = statics.genabsupp
-        self.supp_percent = self.to_percent(self.intsupp)
+        self.supp_rep_often = 500
+        self.hpar = hpar
         self.card = 0
         self.negbordsize = 0
         self.maxnonsupp = 0
         self.maxitemnonsupp = 0
         self.minsupp = 0
-        statics.iface.report("Initializing singletons.")
+        self.intsupp = 0
+        print("Initializing singletons.")
 
         "pair up items with their support and sort them"
-        sorteduniv = [ (len(self.dataset.occurncs[item]),item)
-                       for item in self.dataset.univ ]
-        sorteduniv = sorted(sorteduniv,reverse=True)
-        self.maxitemsupp = sorteduniv[0][0]
+        sorteduniv = set() # autoremove duplicates
+        for item in self.dataset.univ:
+            cl= ItSet(dataset.inters(dataset.occurncs[item]), dataset.occurncs[item])
+            sorteduniv.add(cl)
+            if len(cl) > 1:
+                print("closure of", item, "is", cl)
+            
+        self.clos_singl = sorted(sorteduniv)
+        self.maxitemsupp = self.clos_singl[0].supp
 
-        """
-        find closures of singletons: each has
-        support, contents, and set of supporting transactions
-        """
-        self.clos_singl = set([])
-        for (s,it) in sorteduniv:
-            if s <= self.intsupp:
-                "no items remain with supp > intsupp"
-                self.maxitemnonsupp = s
-                self.maxnonsupp = s
-                break
-            supportingset = self.dataset.occurncs[it]
-            cl_node = (s,
-                       frozenset(self.dataset.inters(supportingset)),
-                       frozenset(supportingset))
-            self.clos_singl.add(cl_node)
-        statics.iface.report(str(len(self.clos_singl)) +
-                     " singleton-based closures.")
+
+
+    def test_size(self, pend_clos):
+        return 0 # stub, bring it here from FlHeap
 
     def mine_closures(self):
 
         if self.maxitemsupp < self.dataset.nrtr:
             "empty set is closed, yield it"
             self.card += 1
-            yield (ItSet([]),self.dataset.nrtr)
+            yield ItSet([], self.dataset.nrtr)
 
-        pend_clos = FlHeap() 
-        pend_clos.mpush(self.clos_singl)
+        # ~ pend_clos = FlHeap() 
+        # ~ pend_clos = list()
+        # ~ pend_clos.mpush(self.clos_singl)
+
+        pend_clos = self.clos_singl.copy() # already sorted
         self.minsupp = self.dataset.nrtr
-        while pend_clos.more() and statics.running:
+        while pend_clos:
             """
             extract largest-support closure and find subsequent ones,
             possibly after halving the heap through test_size(),
             in which case we got a higher value for the intsupp bound
             """
-            new_supp = pend_clos.test_size()
+            new_supp = self.test_size(pend_clos) # wrong right now
             if new_supp > self.intsupp:
                 "support bound grows, heap halved, report"
-                statics.iface.report("Increasing min support from " +
+                print("Increasing min support from " +
                              str(self.intsupp) +
                              (" (%2.3f%%) up to " %
                               self.to_percent(self.intsupp)) +
                              str(new_supp) +
                              (" (%2.3f%%)" %
                               self.to_percent(new_supp)) + 
-#                              "; current support " +
-#                            str(spp) +     # wrong reporting place, spp gets value later
                             ".")
-                statics.please_report = True
                 self.intsupp = new_supp
-            cl = pend_clos.pop()
-            spp = cl[0]
+            cl = heappop(pend_clos)
+            spp = cl.supp
             if spp < self.intsupp:
                 "maybe intsupp has grown in the meantime (neg border)"
                 break
             if spp < self.minsupp:
                 self.minsupp = spp
             self.card += 1
-            yield (ItSet(cl[1]),spp)
-            if (statics.verbose or statics.please_report or 
-                self.card % statics.supp_rep_often == 0):
-                statics.please_report = False
-                statics.iface.report(str(self.card) +
+            yield (cl)
+            if self.card % self.supp_rep_often == 0:
+                print(str(self.card) +
                             " closures traversed, " +
                                str(pend_clos.count) + 
                             " further closures found so far; current support " +
                             str(spp) + ".")
             for ext in self.clos_singl:
                 "try extending with freq closures of singletons"
-                if not ext[1] <= cl[1]:
-                    supportset = cl[2] & ext[2]
+                if not set(ext) <= cl:
+                    supportset = cl.supportset & ext.supportset
                     spp = len(supportset)
                     if spp <= self.intsupp:
                         self.negbordsize += 1
@@ -133,63 +104,68 @@ class ClMiner:
                     else:
                         "find closure and test duplicateness"
                         next_clos = frozenset(self.dataset.inters(supportset))
-                        if (next_clos not in
-                            [ cc[1][1] for cc in pend_clos.storage ]):
-                            cl_node = (len(supportset), next_clos,
-                                       frozenset(supportset))
-                            pend_clos.push(cl_node)
+                        cl_node = ItSet(next_clos, supportset)
+                        print("Generated:", cl_node, "from", cl, "and", ext)
+                        if next_clos not in pend_clos:
+                            # ~ cl_node = ItSet(next_clos, supportset)
+                            heappush(pend_clos, cl_node)
+                        else:
+                            print("Skipped duplicate:", cl_node)
 
-    def to_percent(self,anyintsupp):
-        """
-        anyintsupp expected absolute int support bound,
-        gets translated into percent and truncated according to scale
-        (e.g. for scale 100000 means three decimal places);
-        role is only human communication
-        """
-        return (floor(statics.scale*anyintsupp*100.0/self.dataset.nrtr) /
-                statics.scale)
         
 if __name__ == "__main__":
-	
-
-## This testing only worked for iface_TEXT in choose_iface
-## Now that is being done differently and I must check it out
-
-    from iface_TEXT import iface
-    statics.iface = iface
-
-
-##    fnm = "data/markbask"
-##    supp = 0.0005 # half a transaction, that is, supp > 0: all
     
-    fnm = "data/e13"
-    supp = 1.0/14
+    from hyperparam import HyperParam
 
-##    fnm = "data/adultrain"
+    # ~ fnm = "lenses_recoded"
+    fnm = "e13"
+    supp = 0
+    # ~ supp = 1.0/14
 
-    statics.iface.storefilename(fnm)
-    statics.iface.report("Module clminer running as test on file " + fnm + ".txt")
+    if fnm.endswith('.td') or fnm.endswith('.txt'):
+        filenamefull = fnm
+        filename, _ = fnm.rsplit('.',1)
+    else:
+        filename = fnm
+        filenamefull = fnm + ".txt" # of ".td" one day...
 
-##    miner = ClMiner(Dataset(fnm+".txt"),supp)
-    miner = ClMiner(Dataset(fnm+".txt"))
+    try:
+        datafile = open(filenamefull)
+        assert datafile._checkReadable()
+        print("File is now open.")
+    except (IOError, OSError, AssertionError):
+        print("Nonexistent or unreadable file.")
+        exit(1)
+
+    hpar = HyperParam()
+    print("Reading in dataset from file", filenamefull)
+    d = Dataset(datafile, hpar)
+
+    miner = ClMiner(d, hpar)
 
     cnt = 0
+    lst = list()
     for e in miner.clos_singl:
         cnt += 1
-        statics.iface.report(str(cnt) + "/ " + str(ItSet(e[1])) + "  s: " + str(e[0]))
+        lst.append(e)
 
-    statics.iface.report("Now computing all affordable closures.")
+    print(len(lst), "singleton closures:")
 
-    cnt = 0
+    for e in lst:
+        print("  ", e)
+
+    # ~ print(miner.card, "card")
+    # ~ print(miner.negbordsize, "negbordsize")
+    # ~ print(miner.maxnonsupp, "maxnonsupp")
+    # ~ print(miner.maxitemnonsupp, "maxitemnonsupp")
+    # ~ print(miner.minsupp, "minsupp")
+    # ~ print(miner.maxitemsupp, "maxitemsupp")
+
     for e in miner.mine_closures():
         cnt += 1
-        last = e
-        statics.iface.report(str(cnt) + "/ " + str(e[0]) + "  s: " + str(e[1]))
-
-    statics.iface.report("Found " + str(cnt) + " closures.")
-    statics.iface.report("Last closure generated was " +
-                 str(last[0]) + "  s: " +
-                 str(last[1]) + ".")
-    # ~ statics.iface.endreport()
+        lst.append(e)
+    print(len(lst), "closures total")
 
 
+    for e in lst:
+        print("  ", e)
