@@ -65,18 +65,18 @@ class ClMiner:
             possibly after halving the heap through test_size(),
             in which case we got a higher value for the intsupp bound
             """
-            new_supp = self.test_size(pend_clos) # wrong right now
-            if new_supp > self.intsupp:
-                "support bound grows, heap halved, report"
-                print("Increasing min support from " +
-                             str(self.intsupp) +
-                             (" (%2.3f%%) up to " %
-                              self.to_percent(self.intsupp)) +
-                             str(new_supp) +
-                             (" (%2.3f%%)" %
-                              self.to_percent(new_supp)) + 
-                            ".")
-                self.intsupp = new_supp
+            # ~ new_supp = self.test_size(pend_clos) # wrong right now
+            # ~ if new_supp > self.intsupp:
+                # ~ "support bound grows, heap halved, report"
+                # ~ print("Increasing min support from " +
+                             # ~ str(self.intsupp) +
+                             # ~ (" (%2.3f%%) up to " %
+                              # ~ self.to_percent(self.intsupp)) +
+                             # ~ str(new_supp) +
+                             # ~ (" (%2.3f%%)" %
+                              # ~ self.to_percent(new_supp)) + 
+                            # ~ ".")
+                # ~ self.intsupp = new_supp
             cl = heappop(pend_clos)
             spp = cl.supp
             if spp < self.intsupp:
@@ -119,6 +119,7 @@ if __name__ == "__main__":
 
     # ~ fnm = "lenses_recoded"
     fnm = "e13"
+    # ~ fnm = "file_dat_tkm"
     supp = 0
     # ~ supp = 1.0/14
 
