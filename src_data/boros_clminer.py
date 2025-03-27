@@ -14,7 +14,6 @@ CAVEAT: MUST REVIEW SEVERAL THINGS MARKED "CAVEAT".
 """
 
 
-# ~ from iface import IFace
 from itset import ItSet
 from dataset import Dataset
 
@@ -22,7 +21,9 @@ from heapq import heapify, heappush, heappop
 
 from psutil import virtual_memory as vmem
 
-from collections import Counter # consider removing this
+from collections import defaultdict # Counter # consider removing this
+
+# ~ from itertools import combinations
 
 class Test_Memory:
 
@@ -43,11 +44,10 @@ class Test_Memory:
             "CAVEAT: third threshold or second?"
             return vmem().percent > self.third_thr
 
-class ClMiner(dict):
+class ClMiner:
     """
-    Troppus-based miner. It is a dict from (frozen)sets of items 
-    (closed or not) to their closing ItSet's. Has a mine_closures 
-    generator of course to be called from Lattice.
+    Closure miner as per Boros et al. Has a mine_closures 
+    generator as well.
     """
 
     def __init__(self, dataset, hpar, supp=-1):
@@ -57,7 +57,7 @@ class ClMiner(dict):
         if supp > -1:
             self.intsupp = int(supp * dataset.nrtr)
         else:
-            self.intsupp = IFace.hpar.genabsupp
+            self.intsupp = hpar.genabsupp
         self.card = 0
         self.totlen = 0
         self.pend_clos = list()
@@ -66,48 +66,70 @@ class ClMiner(dict):
         # ~ self.ctr = Counter()
 
 
-    def supp_adding(self, itst, nitt):
-        """
-        Find support of the result of adding nitt (new item) to itst.
-        If necessary, compute supporting set for that. Store on self 
-        if not there yet. (THEN dict order is NOT yield order anymore.)
-        Leave sets and closures in the dict even if their support is 
-        zero.
-        They are not that useful but wanted to avoid testing them again,
-        grab a lot of memory though since closure is all the items.
-        """
-        exact = False # matches maybe a transaction
-        itst = frozenset(itst)
-        itstadd = frozenset(itst.union(nitt))
-        if itstadd in self:
-            "supp of union is supp of its closure"
-            # ~ self.ctr["found as such"] += 1
-            # ~ if self[itstadd].supp == 0:
-                # ~ self.ctr["null support"] + 1
-            return self[itstadd].supp
-        if itst in self:
-            "itstadd not in self but itst is, intersect support sets"
-            # ~ self.ctr["filtered new item"] += 1
-            supp = set(self[itst].supportset) & nitt.supportset
-            clos = self.dataset.inters(supp)
-        else:
-            "need to compute support set on data"
-            supp, exact = self.dataset.slow_supp(itstadd)
-            if exact:
-                "matched a transaction hence it is closed"
-                # ~ self.ctr["matched a transaction"] += 1
-                clos = itstadd
-            else:
-                "intersect support sets"
-                # ~ self.ctr["intersected transactions"] += 1
-                clos = self.dataset.inters(supp)
-        clos = ItSet(clos, supp)
-        # ~ if clos.supp > 0:
-        self[itstadd] = clos
-        self.totlen += len(supp)
-        # ~ if clos.supp == 0:
-            # ~ self.ctr["null support"] + 1
-        return clos.supp
+    # ~ def close(self, st):
+        # ~ "find (and store if new) closure of set st"
+        # ~ fst = frozenset(st)
+        # ~ if fst in self:
+            # ~ "self expected to contain already the whole closure space"
+            # ~ return self[fst]
+        # ~ supp, exact = self.dataset.slow_supp(fst)
+        # ~ if exact:
+            # ~ "matched a transaction hence it is closed"
+            # ~ clos = fst
+        # ~ else:
+            # ~ "intersect support sets"
+            # ~ clos = self.dataset.inters(supp)
+        # ~ clos = ItSet(clos, supp)
+        # ~ # if clos.supp > 0:
+        # ~ self[fst] = clos
+        # ~ self.totlen += len(supp)
+        # ~ return clos
+
+
+    def max_exts(self, st, sorteditems):
+        "find items to add s.t. the resulting support set is maximal"
+        # ~ print(" --- going to extend", st)
+        ext_supp = dict() # map item to support of extension with it
+        for itt in sorteditems:
+            (i,) = itt # extract the item in the singleton ItSet
+            if i not in st:
+                ext_supp[i] = set()
+        mut_incl = dict() # pairwise inclusions between support sets
+        for j in ext_supp:
+            for k in ext_supp:
+                mut_incl[j, k] = True # until proven false
+        for tr in st.supportset:
+            for j in ext_supp:
+                if j in self.dataset.transcns[tr]:
+                    ext_supp[j].add(tr)
+                    for k in ext_supp:
+                        if k not in self.dataset.transcns[tr]:
+                            mut_incl[j, k] = False
+        valid = set(ext_supp)
+        valid_clos = defaultdict(set)
+        # ~ print(" --- mutual inclusions:")
+        # ~ for p in mut_incl:
+            # ~ print(" ----- ", p, mut_incl[p])
+        for j in ext_supp:
+            valid_clos[j].add(j)
+            for k in ext_supp:
+                if mut_incl[j, k] and not mut_incl[k, j]:
+                    "j does not lead to a maximal support set"
+                    # ~ print(" --- discard", j, "covered by", k)
+                    valid.discard(j) # can be repeatedly discarded
+                if mut_incl[j, k] and mut_incl[k, j] and j < k:
+                    valid_clos[j].add(k)
+                    # ~ print(" --- discard", k, "mutual cov with", j)
+                    valid.discard(k) # avoid repetition, keep only j
+        # ~ print(" --- closures:", valid_clos)
+        # ~ print(" --- valid extensions:", valid)
+        for j in ext_supp:
+            if j in valid_clos and j not in valid:
+                del valid_clos[j]
+        # ~ print(" --- valid closures:", valid_clos.values())
+        return valid_clos.values(), ext_supp
+        
+
 
 
     def test_size(self):
@@ -166,7 +188,6 @@ class ClMiner(dict):
 
 
     def mine_closures(self):
-        "As per the Troppus algorithm"
 
         closempty = set()
         sorteditems = list()
@@ -192,8 +213,8 @@ class ClMiner(dict):
             """
             clos = heappop(self.pend_clos)
             pclos = set(clos)  # mutable copy of contents
-            if frozenset(pclos) not in self:
-                self[frozenset(pclos)] = clos
+            # ~ if frozenset(pclos) not in self:
+                # ~ self[frozenset(pclos)] = clos
             self.card += 1
             yield clos
 
@@ -217,65 +238,54 @@ class ClMiner(dict):
                   f"{len(self.pend_clos)} further closures " +
                   f"found so far; current support {clos.supp}.")
 
-            first_level = False  # unless we find otherwise later on
-            mxsupp = 0
-            for itt in sorteditems:
-                (i,) = itt # extract the item in the singleton ItSet
-                # ~ if first_level:
-                    # ~ """
-                    # ~ set at previous loop: no further i can clear mxsupp
-                    # ~ CAVEAT: I don't fully understand these conditions
-                    # ~ """
-                    # ~ break
-                if i in pclos:
-                    "remove this i as required for all future i's"
-                    pclos.remove(i)
-                else:
-                    nst = pclos.copy() # copy to modify
-                    sp = self.supp_adding(nst, itt)
-                    if not pclos:
-                        """
-                        nst a singleton: back down to singletons level
-                        CAVEAT: I don't fully understand these conditions
-                        """
-                        first_level = True
-                    if sp > mxsupp:
-                        ncl = self[frozenset(nst.union(itt))]
-                        for j in ncl:
-                            jtt = ItSet({j}, self.dataset.occurncs[j])
-                            # ~ if (j not in clos and
-                               # ~ (itt.supp > jtt.supp or
-                               # ~ (itt.supp == jtt.supp and i > j))):
-                            if (j not in clos and itt < jtt):
-                                "CAVEAT: I don't fully understand these conditions"
-                                # ~ print(" --- discard as:", jtt, ">", itt)
-                                break
-                        else:
-                            if sp > clos.supp:
-                                break
-                            elif sp > self.intsupp:
-                                heappush(self.pend_clos, ncl)
-                                mxsupp = sp
+            mx_xts, xts_supp = self.max_exts(clos, sorteditems)
+            for xt in mx_xts:
+                one, *_ = xt
+                xtitst = ItSet(clos.union(xt), xts_supp[one])
+                # ~ print("-- heap:", self.pend_clos, end = '')
+                if xtitst not in self.pend_clos and xtitst.supp > self.intsupp:
+                    heappush(self.pend_clos, xtitst)
 
-    def close(self, st):
-        "find (and store if new) closure of set st"
-        fst = frozenset(st)
-        if fst in self:
-            "self expected to contain already the whole closure space"
-            return self[fst]
-        supp, exact = self.dataset.slow_supp(fst)
-        if exact:
-            "matched a transaction hence it is closed"
-            clos = fst
-        else:
-            "intersect support sets"
-            clos = self.dataset.inters(supp)
-        clos = ItSet(clos, supp)
-        # ~ if clos.supp > 0:
-        self[fst] = clos
-        self.totlen += len(supp)
-        return clos
 
+            # ~ first_level = False  # unless we find otherwise later on
+            # ~ mxsupp = 0
+            # ~ for itt in sorteditems:
+                # ~ (i,) = itt # extract the item in the singleton ItSet
+                # ~ # if first_level:
+                    # ~ # """
+                    # ~ # set at previous loop: no further i can clear mxsupp
+                    # ~ # CAVEAT: I don't fully understand these conditions
+                    # ~ # """
+                    # ~ # break
+                # ~ if i in pclos:
+                    # ~ "remove this i as required for all future i's"
+                    # ~ pclos.remove(i)
+                # ~ else:
+                    # ~ nst = pclos.copy() # copy to modify
+                    # ~ sp = self.supp_adding(nst, itt)
+                    # ~ if not pclos:
+                        # ~ """
+                        # ~ nst a singleton: back down to singletons level
+                        # ~ CAVEAT: I don't fully understand these conditions
+                        # ~ """
+                        # ~ first_level = True
+                    # ~ if sp > mxsupp:
+                        # ~ ncl = self[frozenset(nst.union(itt))]
+                        # ~ for j in ncl:
+                            # ~ jtt = ItSet({j}, self.dataset.occurncs[j])
+                            # ~ # if (j not in clos and
+                               # ~ # (itt.supp > jtt.supp or
+                               # ~ # (itt.supp == jtt.supp and i > j))):
+                            # ~ if (j not in clos and itt < jtt):
+                                # ~ "CAVEAT: I don't fully understand these conditions"
+                                # ~ # print(" --- discard as:", jtt, ">", itt)
+                                # ~ break
+                        # ~ else:
+                            # ~ if sp > clos.supp:
+                                # ~ break
+                            # ~ elif sp > self.intsupp:
+                                # ~ heappush(self.pend_clos, ncl)
+                                # ~ mxsupp = sp
 
 if __name__ == "__main__":
 
@@ -284,7 +294,7 @@ if __name__ == "__main__":
 
     # ~ fnm = "lenses_recoded"
     # ~ fnm = "markbask"
-    # ~ fnm = "toy"
+    fnm = "toy"
     # ~ fnm = "ect24.td"
     # ~ fnm = "e24.td"
     # ~ fnm = "e24t.td"
@@ -300,7 +310,7 @@ if __name__ == "__main__":
     # ~ fnm = "connect.td"
     # ~ fnm = "mushroomTr" 
     # ~ fnm = "votesTr" 
-    fnm = "NOW" 
+    # ~ fnm = "NOW" 
     # ~ fnm = "papersTr"
 
     if fnm.endswith('.td') or fnm.endswith('.txt'):
@@ -323,7 +333,7 @@ if __name__ == "__main__":
     d = Dataset(datafile, hpar)
 
     # ~ import time
-    miner = ClMiner(d, hpar, 0)
+    miner = ClMiner(d, hpar, 0.01)
     lcl = list()
     # ~ t0 = time.time()
     for cl in miner.mine_closures():
@@ -334,7 +344,8 @@ if __name__ == "__main__":
     # ~ t1 = time.time()
     # ~ print(t1 - t0)
     print(f"Number of closures: {len(lcl)} of " + 
-          f"support {cl.supp} of more; total lengths {miner.totlen}, {miner.card}.") # or miner.card
+          f"support {cl.supp} of more.") # or miner.card
+    # ~ print("LAST", str(cl))
 
 # ~ Counter of various classes of closures, uncomment self.ctr in __init__
     # ~ rrr = 0

@@ -9,7 +9,7 @@ if __name__=='__main__':
     # ~ datafile = 'markbask.txt'
     datafile = 'cmc-full.txt'
     # ~ n = 12
-    n = 1000
+    n = 3000
     tic = time.time()
     a=TopK(datafile, n)
     x = list(a)
