@@ -227,10 +227,10 @@ class ClMiner:
             if self.card % self.hpar.report_often == 0 or report_it:
                 "Just report."
                 report_it = False
-                print(
-                  f"{self.card} closures traversed, " +
-                  f"{len(self.pend_clos)} further closures " +
-                  f"found so far; current support {clos.supp}.")
+                # ~ print(
+                  # ~ f"{self.card} closures traversed, " +
+                  # ~ f"{len(self.pend_clos)} further closures " +
+                  # ~ f"found so far; current support {clos.supp}.")
 
             mx_xts, xts_supp = self.max_exts(clos, sorteditems)
             for xt in mx_xts:

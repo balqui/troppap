@@ -48,7 +48,7 @@ class ClMiner:
     """
 
     def __init__(self, dataset, hpar, supp=-1):
-        super().__init__()
+        # ~ super().__init__()
         self.dataset = dataset
         self.hpar = hpar
         if supp > -1:
@@ -59,7 +59,7 @@ class ClMiner:
         self.totlen = 0
         self.pend_clos = Store(use_heap = True)
         self.mem_tester = Test_Memory(hpar.nrits)
-        
+
         # ~ self.ctr = Counter()
 
 
@@ -233,10 +233,10 @@ class ClMiner:
             if self.card % self.hpar.report_often == 0 or report_it:
                 "Just report."
                 report_it = False
-                print(
-                  f"{self.card} closures traversed, " +
-                  f"{len(self.pend_clos)} further closures " +
-                  f"found so far; current support {clos.supp}.")
+                # ~ print(
+                  # ~ f"{self.card} closures traversed, " +
+                  # ~ f"{len(self.pend_clos)} further closures " +
+                  # ~ f"found so far; current support {clos.supp}.")
 
             mx_xts, xts_supp = self.max_exts(clos, sorteditems)
             for xt in mx_xts:
@@ -292,7 +292,7 @@ if __name__ == "__main__":
     from hyperparam import HyperParam
 
     # ~ fnm = "lenses_recoded"
-    fnm = "markbask"
+    # ~ fnm = "markbask"
     # ~ fnm = "toy"
     # ~ fnm = "ect24.td"
     # ~ fnm = "e24.td"
@@ -304,7 +304,7 @@ if __name__ == "__main__":
 
     # ~ fnm = "supermarketTr"
     # ~ fnm = "adultrain"
-    # ~ fnm = "cmc-full"
+    fnm = "cmc-full"
     # ~ fnm = "chess.td"
     # ~ fnm = "connect.td"
     # ~ fnm = "mushroomTr" 
