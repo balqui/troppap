@@ -14,7 +14,7 @@ from store import Store
 
 # ~ from heapq import heapify, heappush, heappop
 
-from psutil import virtual_memory as vmem
+# ~ from psutil import virtual_memory as vmem
 
 from collections import defaultdict # Counter # consider removing this
 
@@ -22,24 +22,24 @@ from collections import defaultdict # Counter # consider removing this
 
 
 
-class Test_Memory:
+# ~ class Test_Memory:
 
-    def __init__(self, nrits):
-        self.cuts = 0
-        self.nrits = nrits
-        self.nrits_thr = 1000
-        self.first_thr = 50
-        self.secnd_thr = 65
-        self.third_thr = 80
+    # ~ def __init__(self, nrits):
+        # ~ self.cuts = 0
+        # ~ self.nrits = nrits
+        # ~ self.nrits_thr = 1000
+        # ~ self.first_thr = 50
+        # ~ self.secnd_thr = 65
+        # ~ self.third_thr = 80
 
-    def too_much_mem(self):
-        if self.nrits < self.nrits_thr or self.cuts == 0:
-            return vmem().percent > self.first_thr
-        elif self.cuts == 1:
-            return vmem().percent > self.secnd_thr
-        else:
-            "CAVEAT: third threshold or second?"
-            return vmem().percent > self.third_thr
+    # ~ def too_much_mem(self):
+        # ~ if self.nrits < self.nrits_thr or self.cuts == 0:
+            # ~ return vmem().percent > self.first_thr
+        # ~ elif self.cuts == 1:
+            # ~ return vmem().percent > self.secnd_thr
+        # ~ else:
+            # ~ "CAVEAT: third threshold or second?"
+            # ~ return vmem().percent > self.third_thr
 
 class ClMiner:
     """
@@ -47,7 +47,7 @@ class ClMiner:
     generator as well.
     """
 
-    def __init__(self, dataset, hpar, supp=-1):
+    def __init__(self, dataset, hpar, supp = -1):
         # ~ super().__init__()
         self.dataset = dataset
         self.hpar = hpar
@@ -57,8 +57,8 @@ class ClMiner:
             self.intsupp = hpar.genabsupp
         self.card = 0
         self.totlen = 0
-        self.pend_clos = Store(use_heap = True)
-        self.mem_tester = Test_Memory(hpar.nrits)
+        self.pend_clos = Store(use_heap = False)
+        # ~ self.mem_tester = Test_Memory(hpar.nrits)
 
         # ~ self.ctr = Counter()
 
@@ -233,10 +233,10 @@ class ClMiner:
             if self.card % self.hpar.report_often == 0 or report_it:
                 "Just report."
                 report_it = False
-                # ~ print(
-                  # ~ f"{self.card} closures traversed, " +
-                  # ~ f"{len(self.pend_clos)} further closures " +
-                  # ~ f"found so far; current support {clos.supp}.")
+                print(
+                  f"{self.card} closures traversed, " +
+                  f"{len(self.pend_clos)} further closures " +
+                  f"found so far; current support {clos.supp}.")
 
             mx_xts, xts_supp = self.max_exts(clos, sorteditems)
             for xt in mx_xts:
@@ -332,7 +332,7 @@ if __name__ == "__main__":
     d = Dataset(datafile, hpar)
 
     import time
-    miner = ClMiner(d, hpar, 0)
+    miner = ClMiner(d, hpar, 0.05)
     lcl = list()
     t0 = time.time()
     for cl in miner.mine_closures():

@@ -22,18 +22,22 @@ from store import Store
 
 class ClMiner:
 
-    def __init__(self, dataset, hpar):
+    def __init__(self, dataset, hpar, supp = -1):
         "Some inherited fields are likely to be unnecessary here"
         self.dataset = dataset
-        self.supp_rep_often = 500
+        # ~ self.supp_rep_often = 500
         self.hpar = hpar
         self.card = 0
         self.negbordsize = 0
         self.maxnonsupp = 0
         self.maxitemnonsupp = 0
         self.minsupp = 0
-        self.intsupp = 0
-        self.pend_clos = Store(use_heap = True)
+        if supp > -1:
+            self.intsupp = int(supp * dataset.nrtr)
+        else:
+            self.intsupp = hpar.genabsupp
+        # ~ self.intsupp = 0
+        self.pend_clos = Store(use_heap = False)
 
         # ~ print("Initializing singletons.")
         "pair up items with their support and sort them"
@@ -95,12 +99,12 @@ class ClMiner:
                 self.minsupp = spp
             self.card += 1
             yield (cl)
-            # ~ if self.card % self.supp_rep_often == 0:
-                # ~ print(str(self.card) +
-                            # ~ " closures traversed, " +
-                               # ~ str(pend_clos.count) + 
-                            # ~ " further closures found so far; current support " +
-                            # ~ str(spp) + ".")
+            if self.card % self.hpar.report_often == 0:
+                print(str(self.card) +
+                            " closures traversed, " +
+                               str(len(self.pend_clos)) + 
+                            " further closures found so far; current support " +
+                            str(spp) + ".")
             for ext in self.clos_singl:
                 "try extending with freq closures of singletons"
                 if not set(ext) <= cl:
@@ -131,8 +135,6 @@ if __name__ == "__main__":
     # ~ fnm = "e13"
     # ~ fnm = "markbask"
     fnm = "cmc-full"
-    supp = 0
-    # ~ supp = 1.0/14
 
     if fnm.endswith('.td') or fnm.endswith('.txt'):
         filenamefull = fnm
@@ -153,7 +155,7 @@ if __name__ == "__main__":
     print("Reading in dataset from file", filenamefull)
     d = Dataset(datafile, hpar)
 
-    miner = ClMiner(d, hpar)
+    miner = ClMiner(d, hpar, 0.05)
 
     import time
     lcl = list()
