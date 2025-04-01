@@ -1,0 +1,21 @@
+* Dataset papers:
+
+4285 nonce items out of 8233, which lead to 683 sets of support 1 
+that are closures of singletons; their average size is ~63.
+
+1220 items of support 2, which lead to 910 closures of average size ~12.
+
+566 items of support 3, which lead to 542 closures of average size ~5.
+
+346 items of support 4, which lead to 342 closures of average size ~2.
+
+* Dataset NOW:
+
+1927 nonce items out of 3873, which lead to 671 sets of support 1 
+that are closures of singletons; their average size is ~14.
+
+677 items of support 2, which lead to 565 closures of average size ~5.
+
+338 items of support 3, which lead to 331 closures of average size ~2.
+
+* All the other datasets have few (if any) items of low support.

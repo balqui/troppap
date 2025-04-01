@@ -119,7 +119,7 @@ if __name__ == "__main__":
 
     # ~ fnm = "lenses_recoded"
     fnm = "e13"
-    supp = 0
+    # ~ supp = 0
     # ~ supp = 1.0/14
 
     if fnm.endswith('.td') or fnm.endswith('.txt'):
@@ -132,27 +132,27 @@ if __name__ == "__main__":
     try:
         datafile = open(filenamefull)
         assert datafile._checkReadable()
-        print("File is now open.")
+        # ~ print("File is now open.")
     except (IOError, OSError, AssertionError):
         print("Nonexistent or unreadable file.")
         exit(1)
 
     hpar = HyperParam()
-    print("Reading in dataset from file", filenamefull)
+    # ~ print("Reading in dataset from file", filenamefull)
     d = Dataset(datafile, hpar)
 
     miner = ClMiner(d, hpar)
 
     cnt = 0
     lst = list()
-    for e in miner.clos_singl:
-        cnt += 1
-        lst.append(e)
+    # ~ for e in miner.clos_singl:
+        # ~ cnt += 1
+        # ~ lst.append(e)
 
-    print(len(lst), "singleton closures:")
+    # ~ print(len(lst), "singleton closures:")
 
-    for e in lst:
-        print("  ", e)
+    # ~ for e in lst:
+        # ~ print("  ", e)
 
     # ~ print(miner.card, "card")
     # ~ print(miner.negbordsize, "negbordsize")
@@ -164,8 +164,9 @@ if __name__ == "__main__":
     for e in miner.mine_closures():
         cnt += 1
         lst.append(e)
-    print(len(lst), "closures total")
+    # ~ print(len(lst), "closures total")
 
 
     for e in lst:
-        print("  ", e)
+        print(e)
+        # ~ print("  ", e)
