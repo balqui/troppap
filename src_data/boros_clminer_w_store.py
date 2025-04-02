@@ -55,7 +55,7 @@ class ClMiner:
             self.intsupp = hpar.genabsupp
         self.card = 0
         self.totlen = 0
-        self.pend_clos = Store(use_heap = True)
+        self.pend_clos = Store(use_heap = False)
         # ~ self.mem_tester = Test_Memory(hpar.nrits)
 
         # ~ self.ctr = Counter()
