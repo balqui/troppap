@@ -71,10 +71,14 @@ class ItSet(set):
         return self._hash
 
 
-    def __str__(self):
-        return ('{ ' + ', '.join(sorted(str(e) for e in self)) +
-                       ' } [' +  str(self.supp) + ']')
+    # ~ def __str__(self):
+        # ~ return ('{ ' + ', '.join(sorted(str(e) for e in self)) +
+                       # ~ ' } [' +  str(self.supp) + ']')
 
+    def __str__(self):
+        "TEMPORARY WHILE TESTING makerefs AND closchecker"
+        return (','.join(sorted(str(e) for e in self)) +
+                       '/' +  str(self.supp))
 
     # ~ def fullstr(self):
         # ~ s = '[X]' if self.supportset is None else str(sorted(self.supportset))

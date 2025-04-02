@@ -20,8 +20,6 @@ from collections import defaultdict # Counter # consider removing this
 
 # ~ from itertools import combinations
 
-
-
 # ~ class Test_Memory:
 
     # ~ def __init__(self, nrits):
@@ -57,7 +55,7 @@ class ClMiner:
             self.intsupp = hpar.genabsupp
         self.card = 0
         self.totlen = 0
-        self.pend_clos = Store(use_heap = False)
+        self.pend_clos = Store(use_heap = True)
         # ~ self.mem_tester = Test_Memory(hpar.nrits)
 
         # ~ self.ctr = Counter()
@@ -292,7 +290,7 @@ if __name__ == "__main__":
     from hyperparam import HyperParam
 
     # ~ fnm = "lenses_recoded"
-    # ~ fnm = "markbask"
+    fnm = "markbask"
     # ~ fnm = "toy"
     # ~ fnm = "ect24.td"
     # ~ fnm = "e24.td"
@@ -304,7 +302,7 @@ if __name__ == "__main__":
 
     # ~ fnm = "supermarketTr"
     # ~ fnm = "adultrain"
-    fnm = "cmc-full"
+    # ~ fnm = "cmc-full"
     # ~ fnm = "chess.td"
     # ~ fnm = "connect.td"
     # ~ fnm = "mushroomTr" 
@@ -332,7 +330,7 @@ if __name__ == "__main__":
     d = Dataset(datafile, hpar)
 
     import time
-    miner = ClMiner(d, hpar, 0.05)
+    miner = ClMiner(d, hpar, 0.02)
     lcl = list()
     t0 = time.time()
     for cl in miner.mine_closures():
@@ -342,10 +340,21 @@ if __name__ == "__main__":
         # ~ print(cl)
     t1 = time.time()
     print("Time:", t1 - t0)
+    mnsupp = cl.supp
     print(f"Number of closures: {len(lcl)} of " + 
-          f"support {cl.supp} of more.") # or miner.card
+          f"support {mnsupp} of more.") # or miner.card
     # ~ print("LAST", str(cl))
     # ~ print("ALL", lcl)
+
+    uh = 'h' if miner.pend_clos.use_heap else 'd'
+    if lcl:
+        outfnm = "boros_" + uh + "_" + filename + "_" + str(mnsupp) + ".txt"
+        with open(outfnm, 'w') as g:
+            for e in lcl:
+                print(e, file = g)
+        print("Wrote closures file", outfnm)
+    else:
+        print("No closures found, no closures file created.")
 
 # ~ Counter of various classes of closures, uncomment self.ctr in __init__
     # ~ rrr = 0
