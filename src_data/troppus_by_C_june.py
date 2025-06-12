@@ -22,7 +22,8 @@ class TopK:
         self.items=[x for x,y in sorted(list(d.items()),key=lambda x: x[1],reverse=True)] #all the items in descdending order of support
         self.l=len(self.transactions) # number of transactions
         self.l_items=len(self.items) #number of items
-        self.closures = defaultdict(lambda:[])
+        self.supplists = defaultdict(lambda:[])
+        self.suppsingl = defaultdict(lambda:[])
 
         
     def __iter__(self):
@@ -117,17 +118,23 @@ class TopK:
             aj=self.items[j]
             if aj not in Yitems:
                 X_items = self.jth_suffix(Yitems,j+1)
+                single = not bool(X_items)
                 X_items.add(aj)
                 X_items=frozenset(X_items)
-                if X_items in self.closures:
-                    next_trans_list = self.closures[X_items]
+                if X_items in self.supplists:
+                    next_trans_list = self.supplists[X_items]
                 else:
-                    next_trans_list = [t for t in self.transactions if X_items.issubset(t)]
-                    self.closures[X_items] = next_trans_list
+                    if single:
+                        next_trans_list = [t for t in self.transactions if aj in t]
+                    else:
+                        next_trans_list = [t for t in self.suppsinlg[aj] if X_items.issubset(t)]
+                    self.supplists[X_items] = next_trans_list
                 
-##                next_trans_list = self.extract_trans(aj,trans_list)
+
                 next_items=self.closure(next_trans_list)
-                self.closures[frozenset(next_items)] = next_trans_list
+                if single:
+                    self.suppsingl[aj] = next_trans_list
+                self.supplists[frozenset(next_items)] = next_trans_list
                 next_supp = len(next_trans_list)
                 if next_supp>m and self.jth_suffix(next_items,j+1)==self.jth_suffix(Yitems,j+1):
                     if next_supp>self.l-Ysupp:
