@@ -290,7 +290,7 @@ if __name__ == "__main__":
     from hyperparam import HyperParam
 
     # ~ fnm = "lenses_recoded"
-    fnm = "markbask"
+    # ~ fnm = "markbask"
     # ~ fnm = "toy"
     # ~ fnm = "ect24.td"
     # ~ fnm = "e24.td"
@@ -309,6 +309,8 @@ if __name__ == "__main__":
     # ~ fnm = "votesTr" 
     # ~ fnm = "NOW" 
     # ~ fnm = "papersTr"
+
+    fnm = "ejemploPV"
 
     if fnm.endswith('.td') or fnm.endswith('.txt'):
         filenamefull = fnm
@@ -344,7 +346,8 @@ if __name__ == "__main__":
     print(f"Number of closures: {len(lcl)} of " + 
           f"support {mnsupp} of more.") # or miner.card
     # ~ print("LAST", str(cl))
-    # ~ print("ALL", lcl)
+    print("ALL", lcl)
+    exit(1)
 
     uh = 'h' if miner.pend_clos.use_heap else 'd'
     if lcl:

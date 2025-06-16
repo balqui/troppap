@@ -1,7 +1,7 @@
 """
-yacaree
+Based on yacaree, tuned for Pietracaprina/Vandin by adding the core item
 
-Current revision: late Pluviose 2025
+Current revision: late Prairial 2025
 
 Author: Jose Luis Balcazar, ORCID 0000-0003-4248-4528 
 Copyleft: MIT License (https://en.wikipedia.org/wiki/MIT_License)
@@ -11,7 +11,7 @@ Careful:
 dict keys; ItSet should be handled always as immutable 
 even though the program does not control that instances 
 don't change.
-(2) Comparison <= redefined to be support-based instead 
+(2) Comparison < redefined to be support-based instead 
 of set inclusion.
 """
 
@@ -20,7 +20,7 @@ class ItSet(set):
     cnt = 0 # counts created ItSet's to set up the tie-breaking label
 
 
-    def __init__(self, contents = set(), infosupp = -1):
+    def __init__(self, contents = set(), infosupp = -1, core = 0):
         """
         Current closure miner puts in heap pending closures with
         their supporting set of transactions. Maybe one day I can
@@ -29,6 +29,7 @@ class ItSet(set):
         """
         super().__init__(contents)
         self._hash = hash(frozenset(contents))
+        self.core = core
         if type(infosupp) == int:
             self.supp = infosupp
             self.supportset = None
