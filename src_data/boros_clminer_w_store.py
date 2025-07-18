@@ -284,7 +284,7 @@ class ClMiner:
                                 # ~ heappush(self.pend_clos, ncl)
                                 # ~ mxsupp = sp
 if __name__ == "__main__":
-    with open("times_yacaree_True.txt","w") as f:
+    with open("times_boros_True.txt","w") as f:
         names = ["supermarketTr","NOW","papersTr","votesTr","mushroomTr","connect.td","chess.td","cmc-full","adultrain"]
         for i in range(9):
             fnm = names[i]
