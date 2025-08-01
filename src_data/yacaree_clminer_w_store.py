@@ -2,7 +2,7 @@
 Project: yacaree
 Programmers: JLB
 
-Current date: early Germinal 2025
+Date: early Germinal 2025 with corrections mid Thermidor
 
 Its main method is the iterator that provides, one by one,
 in order of decreasing support, all the closures for a given
@@ -38,18 +38,23 @@ class ClMiner:
             self.intsupp = hpar.genabsupp
         # ~ self.intsupp = 0
         self.pend_clos = Store(use_heap = False)
-
-        # ~ print("Initializing singletons.")
-        "pair up items with their support and sort them"
         sorteduniv = set() # autoremove duplicates
+        clos_singl_skip = 0
         for item in self.dataset.univ:
+            "pair up items with their support and sort them"
             cl= ItSet(dataset.inters(dataset.occurncs[item]), dataset.occurncs[item])
-            sorteduniv.add(cl)
+            if cl.supp > self.intsupp:
+                sorteduniv.add(cl)
+            else:
+                clos_singl_skip += 1
             # ~ if len(cl) > 1:
                 # ~ print("closure of", item, "is", cl)
             
         self.clos_singl = sorted(sorteduniv)
         self.maxitemsupp = self.clos_singl[0].supp
+        print("Initialized singletons; " + 
+            f"{clos_singl_skip} closures of singletons " + 
+            "below support threshold omitted.")
 
 
 
@@ -127,6 +132,10 @@ class ClMiner:
                             # ~ print("Skipped duplicate:", cl_node)
 
 if __name__ == "__main__":
+
+    from hyperparam import HyperParam
+    import time
+
     with open("times_yacaree_True.txt","w") as f:
         names = ["supermarketTr","NOW","papersTr","votesTr","mushroomTr","connect.td","chess.td","cmc-full","adultrain"]
         for i in range(9):
@@ -140,7 +149,8 @@ if __name__ == "__main__":
                 filenamefull = fnm + ".txt" # of ".td" one day...
 
             try:
-                datafile = open("datasets/"+filenamefull)
+                # ~ datafile = open("datasets/"+filenamefull)
+                datafile = open(filenamefull)
                 assert datafile._checkReadable()
                 print(filenamefull,"File is now open.\n")
             except (IOError, OSError, AssertionError):
