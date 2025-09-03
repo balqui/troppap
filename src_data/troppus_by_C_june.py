@@ -1,4 +1,9 @@
 # -*- coding: cp1252 -*-
+##from hyperparam import HyperParam
+##from dataset import Dataset
+import time
+
+
 import heapq
 from collections import defaultdict
 class TopK:
@@ -127,7 +132,7 @@ class TopK:
                     if single:
                         next_trans_list = [t for t in self.transactions if aj in t]
                     else:
-                        next_trans_list = [t for t in self.suppsinlg[aj] if X_items.issubset(t)]
+                        next_trans_list = [t for t in self.suppsingl[aj] if X_items.issubset(t)]
                     self.supplists[X_items] = next_trans_list
                 
 
@@ -146,9 +151,44 @@ class TopK:
         self.generatedK=self.generatedK+1
         return Yitems
 
-if __name__=='__main__':
-    a=TopK('data.txt',5)
-    [e for e in a]
+if __name__ == "__main__":
+    for iii in range(10):
+        with open("times_10_troppus_by_C.txt","a") as f:
+            names = ["supermarketTr","NOW","papersTr","votesTr","mushroomTr","connect.td","chess.td","cmc-full","adultrain"]
+            for i in range(len(names)):
+                fnm = names[i]
+                if fnm.endswith('.td') or fnm.endswith('.txt'):
+                    filenamefull = fnm
+                    filename, _ = fnm.rsplit('.',1)
+                else:
+                    filename = fnm
+                    filenamefull = fnm + ".txt" # of ".td" one day...
 
+                try:
+                    datafile = open("datasets/"+filenamefull)
+                    assert datafile._checkReadable()
+                    print(filenamefull,"File is now open.\n")
+                except (IOError, OSError, AssertionError):
+                    print(filenamefull,"Nonexistent or unreadable file.")
+                    exit(1)
+                f.write("Reading in dataset from file %s \n"%filenamefull)
+##                l1 = [415,7,22,83,234,63812,2351,5,137]
+##                l2 = [4627,1597,721,435,8124,67557,3196,1473,32561]
+##                ratio = [0.0897, 0.004, 0.031, 0.191, 0.0289, 0.94457, 0.7357, 0.0034, 0.00423]
+                n_of_closures = [11834,1456,3001,11806,23191,1029,14164,19936,33201]
+                n_of_closures = [10]*9
+                miner = TopK("datasets/"+filenamefull,n_of_closures[i])
+                lcl = list()
+                t0 = time.time()
+                for cl in miner:
+                    lcl.append(cl)
+                t1 = time.time()
+
+                f.write("Time: %.3f\n"%(t1 - t0))
+                f.write(f"Number of closures: {len(lcl)} of " + f"support 0 of more.\n") # the 0 is because I don't have the info of last supp
+                g = open("troppus_by_C_%s_iter_%s.txt"%(fnm,iii),"w")            # but I want to keep the same structure of the output
+                for elem in lcl:
+                    g.write(str(elem)+"\n")
+                g.close()
   
 
