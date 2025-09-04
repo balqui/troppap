@@ -15,6 +15,7 @@ CAVEAT: MUST REVIEW SEVERAL THINGS MARKED "CAVEAT".
 
 
 # ~ from iface import IFace
+import time
 from itset import ItSet
 from dataset import Dataset
 
@@ -278,7 +279,53 @@ class ClMiner(dict):
         # ~ self.totlen += len(supp)
         # ~ return clos
 
+if __name__ == "__main__":
+    for iii in range(10):
+        with open("times_10_troppus_NOW_True.txt","a") as f:
+            names = ["supermarketTr","NOW","papersTr","votesTr","mushroomTr","connect.td","chess.td","cmc-full","adultrain"]
+            for i in range(len(names)):
+                fnm = names[i]
+                if fnm.endswith('.td') or fnm.endswith('.txt'):
+                    filenamefull = fnm
+                    filename, _ = fnm.rsplit('.',1)
+                else:
+                    filename = fnm
+                    filenamefull = fnm + ".txt" # of ".td" one day...
 
+                try:
+                    datafile = open("datasets/"+filenamefull)
+                    assert datafile._checkReadable()
+                    print(filenamefull,"File is now open.\n")
+                except (IOError, OSError, AssertionError):
+                    print(filenamefull,"Nonexistent or unreadable file.")
+                    exit(1)
+
+                hpar = HyperParam()
+                f.write("Reading in dataset from file %s \n"%filenamefull)
+                d = Dataset(datafile, hpar)
+                l1 = [415,7,22,83,234,63812,2351,5,137]
+                l2 = [4627,1597,721,435,8124,67557,3196,1473,32561]
+                ratio = [0.0897, 0.004, 0.031, 0.191, 0.0289, 0.94457, 0.7357, 0.0034, 0.00423]
+##                miner = ClMiner(d, hpar, l1[i]/l2[i])
+                miner = ClMiner(d, hpar, ratio[i])
+                lcl = list()
+                t0 = time.time()
+                for cl in miner.mine_closures():
+                    lcl.append(cl)
+            ##        if len(lcl) == 10:
+            ##            break
+                    # ~ print(cl)
+                t1 = time.time()
+                print("Time: %.3f\n"%(t1 - t0))
+                print(f"Number of closures: {len(lcl)} of " + f"support {cl.supp} of more.\n")
+                f.write("Time: %.3f\n"%(t1 - t0))
+                f.write(f"Number of closures: {len(lcl)} of " + f"support {cl.supp} of more.\n")
+                g = open("troppus_h_NOW_7_iter_%s.txt"%iii,"w")
+                for elem in lcl:
+                    g.write(str(elem)+"\n")
+                g.close()
+
+"""
 if __name__ == "__main__":
 
     # ~ from time import time
@@ -350,3 +397,5 @@ if __name__ == "__main__":
         # ~ print(cl)
 
 
+
+"""
