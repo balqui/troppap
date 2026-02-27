@@ -1,0 +1,8 @@
+Reading in dataset from file NOW.txt 
+Support quotient 0.03757044458359424
+Time: 217.081
+Number of closures: 10 of support 63 of more.
+Reading in dataset from file papersTr.txt 
+Support quotient 0.30513176144244103
+Time: 1124.466
+Number of closures: 8 of support 234 of more.

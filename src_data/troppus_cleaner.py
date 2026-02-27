@@ -32,7 +32,7 @@ class ClMiner(dict):
             self.intsupp = IFace.hpar.genabsupp
         self.card = 0
         self.totlen = 0
-        self.pend_clos = Store(use_heap = False)
+        self.pend_clos = Store(use_heap = True)
 
 
     def supp_adding(self, itst, nitt):
@@ -148,8 +148,8 @@ if __name__ == "__main__":
     # ~ fnm = "connect.td"
     # ~ fnm = "mushroomTr" 
     # ~ fnm = "votesTr" 
-    fnm = "NOW" 
-    # ~ fnm = "papersTr"
+    # ~ fnm = "NOW" 
+    fnm = "papersTr"
 
     if fnm.endswith('.td') or fnm.endswith('.txt'):
         filenamefull = fnm
@@ -171,7 +171,8 @@ if __name__ == "__main__":
     d = Dataset(datafile, hpar)
 
     import time
-    miner = ClMiner(d, hpar, 0.0043)
+    # ~ miner = ClMiner(d, hpar, 0.0043) # NOW
+    miner = ClMiner(d, hpar, 0.031) # papers
     lcl = list()
     t0 = time.time()
     for cl in miner.mine_closures():
@@ -185,3 +186,6 @@ if __name__ == "__main__":
           f"support {cl.supp} of more; total lengths {miner.totlen}, {miner.card}.") # or miner.card
 
 
+
+# heap false: 31.69 31.46 31.42 31.27 31.02
+# heap true: 52.94 49.65 449.69 % 12.2 GB
