@@ -50,7 +50,7 @@
   \llap{\rule[0.5ex]{\wd0}{0.4pt}}%
 }
 
-
+\renewcommand{\floatpagefraction}{0.7} % FOR THE LATTICE NOT GETTING ALONE
 
 % LIPIcs FORMATTED AND SO - SKIP TO BELOW FOR NONFORMATTED
 %This is a template for producing LIPIcs articles. 
@@ -808,22 +808,11 @@ exponentially. A more detailed explanation of these phenomena
 is deferred to a future text, as it would take quite some space.
 
 
-
-\section{???} % \label{sec:Main}
-
-We present here a novel algorithm
-that is able to mine all closures
-in order of descending support.
-
-$\bullet$ \added{Troppus, taken from an "Algorithms" 
-section that we had, compare to below and I guess simply
-delete it here.}
-
-\added{The text contained two versions, not identical
-but essentially the same. --JLB}
-
 \begin{algorithm}
-\caption{{\sc Troppus}} % \label{algorithm}
+\caption{{\sc Troppus} {taken from an "Algorithms" 
+section that we had, compare I guess simply
+delete it here. The text contained two versions, not identical
+but essentially the same.}} % \label{algorithm}
   \begin{algorithmic}[1]
     \STATE $h = \{\overline{\emptyset}\}$ \COMMENT{add closure of $\emptyset$ to an empty heap}
     \WHILE {$h$ not empty} 
