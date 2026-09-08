@@ -1,8 +1,8 @@
 '''
 cannedveg: 276
 frozenmeal: 268
-beer: 255
 fruitveg: 255
+beer: 255
 wine: 251
 confectionery: 248
 fish: 245
