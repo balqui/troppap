@@ -137,7 +137,7 @@ if __name__=='__main__':
     print("----------")
     # b = TroppusRev('micromarket.txt',31)
     # b = TroppusRev('minimarket.txt',115)
-    b = TroppusRev('e13alt.txt', 11)
-    # b = TroppusRev('e13alt2.txt', 11)
+    # b = TroppusRev('e13alt.txt', 11)
+    b = TroppusRev('e13alt2.txt', 11)
     print([(sorted(e[0]), e[1]) for e in b])
 

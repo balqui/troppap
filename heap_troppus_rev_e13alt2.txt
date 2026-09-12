@@ -1,0 +1,119 @@
+
+supports refer to dataset e13alt2.txt:
+
+[
+ ([], 13), (['a'], 7), (['b'], 7), (['c'], 6), (['d'], 6), 
+ (['a', 'c'], 5), (['a', 'b'], 3), (['b', 'd'], 3), 
+ (['b', 'c'], 3), (['a', 'b', 'c'], 2), (['a', 'c', 'd'], 1)
+]
+
+implications for closures: ad => c, cd => a (equiv: d => (a <=> c)
+
+"precedes" means lectically, rightmost bit is 'a', leftmost is 'd'
+
+
+
+heap init: 0 0 0 0
+
+0 0 0 0    precedes everything, has at least as much support as anything
+13         Ganter successors: 0 0 0 1   0 0 1 0   0 1 0 0   1 0 0 0
+           first one has at least as much support as each of the others
+           0 0 0 0   ->   0 0 0 1
+
+0 0 0 1    precedes (and at least as much support as) anything left
+7          Ganter successors: 0 0 1 0   0 1 0 0   1 0 0 0
+           first one has at least as much support as each of the others
+           0 0 0 1   ->   0 0 1 0
+
+0 0 1 0    precedes (and at least as much support as) anything left
+7          Ganter successors: 0 0 1 1   0 1 0 0   1 0 0 0
+           last one has at most as much support as the previous one
+           0 0 1 0   ->   0 0 1 1   0 1 0 0
+
+(0 0 1 1 skipped due to lower support)
+
+0 1 0 0    does not precede 0 0 1 1 (but has more support)
+6          precedes (and at least as much support as) anything else
+           to keep the invariant, 0 0 1 1 must be in the heap as well
+           Ganter successors: 0 1 0 1   0 1 1 0   1 0 0 0
+           second does not have more support than first, third does
+           0 1 0 0   ->   0 1 0 1   1 0 0 0
+
+(0 1 0 1 skipped due to low support)
+
+(0 1 1 0 skipped due to low support) 
+
+(0 1 1 1 skipped due to low support) 
+
+1 0 0 0    does not precede, but has more support than:
+6          0 1 0 1   0 1 1 0   0 1 1 1 
+           there, 0 1 0 1 precedes and has more support than the others
+           to keep the invariant, 0 1 0 1 must be in the heap as well
+           Ganter successors: 1 0 0 1 => 1 1 0 1   1 0 1 0   1 1 0 0 => 1 1 0 1
+           first closure fails the prefix, second one ok, third one prefix ok but not more support
+           1 0 0 0   ->   1 0 1 0
+
+("caters for": precedes or equals and has at least as much support)
+At this point heap = 0 0 1 1   0 1 0 1   1 0 1 0
+           0 0 1 1 / 3   caters for itself,
+                                    (not 0 1 0 0 nor 0 1 0 1 which have larger support)
+                                    0 1 1 0 / 3,
+                                    0 1 1 1 / 2 (not incl-minimal)
+                                    1 0 0 1 (not closed)
+                                    1 0 1 0 / 3 which is in the heap
+                                    1 0 1 1 (not closed)
+                                    1 1 0 0 (not closed)
+                                    1 1 0 1 / 1 (not incl-minimal)
+                                    1 1 1 0 (not closed)
+                                    1 1 1 1 (support zero)
+           0 1 0 1 / 5   caters for itself, 
+                                    0 1 1 0 / 3,
+                                    0 1 1 1 / 2 (not incl-minimal)
+                                    1 0 0 1 (not closed)
+                                    1 0 1 0 / 3 which is in the heap
+                                    1 0 1 1 (not closed)
+                                    1 1 0 0 (not closed)
+                                    1 1 0 1 / 1 (not incl-minimal)
+                                    1 1 1 0 (not closed)
+                                    1 1 1 1 (support zero)
+           1 0 1 0 / 3   caters for itself,
+                                    1 0 1 1 (not closed)
+                                    1 1 0 0 (not closed)
+                                    1 1 0 1 / 1 (not incl-minimal)
+                                    1 1 1 0 (not closed)
+                                    1 1 1 1 (support zero)
+
+
+
+
+0 1 0 1    does not cater for 0 0 1 1 but caters for
+5          (precedes and at least as much support as) the rest
+           Ganter successors: 0 1 1 0   1 0 0 0 break
+           0 1 0 1   ->   0 1 1 0
+           heap contains now all the itemsets of support 3:
+           heap = 0 0 1 1   1 0 1 0   0 1 1 0
+
+0 1 1 0    does not cater for 0 0 1 1 but caters for    
+3          (precedes and at least as much support as) the rest
+           Ganter successors: 0 1 1 1   1 0 0 0 break
+           0 1 1 0   ->   0 1 1 1
+
+0 0 1 1    caters for everything left
+3          successors: 0 1 0 0 break
+
+(0 1 1 1 skipped due to low support)
+
+(1 0 0 1 not closed)
+
+1 0 1 0    does not cater for 0 1 1 1 but caters for the rest
+3          (1 0 0 1 not closed)
+           Ganter successors: 1 0 1 1 => 1 1 1 1, 1 1 0 0 => 1 1 0 1
+           first closure fails the prefix, second one ok
+           1 0 1 0   ->   1 1 0 1
+           heap contains 0 1 1 1, 1 1 0 1, only pending closures
+
+0 1 1 1    Ganter successor 1 0 0 0 break
+2
+
+1 1 0 1    Ganter successor 1 1 1 0 => 1 1 1 1 support 0 does not beat m = 0
+1
