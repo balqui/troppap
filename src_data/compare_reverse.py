@@ -2,6 +2,12 @@
 import heapq
 from collections import defaultdict
 
+def pp(aSet,aDict):
+    if aSet:
+        to = sorted([int(aDict[a].replace("a","")) for a in aSet])
+        return "".join(["a"+str(a) for a in to])
+    return "O"
+
 class Troppus:
     '''This class implements an iterator for getting the first K closed sets'''
     def __init__(self, nameFile,K=2):
@@ -22,6 +28,7 @@ class Troppus:
             for item in tran.strip().split():
                 d[item]+=1
         self.items=[x for x,y in sorted(list(d.items()),key=lambda x: x[1],reverse=True)] #all the items in descending order of support
+        self.items_dic = {self.items[i]:"a%s"%(i+1) for i in range(len(self.items))}
         self.l=len(self.transactions) # number of transactions
         self.l_items=len(self.items) #number of items
         self.supplists = defaultdict(lambda:[])
@@ -70,7 +77,7 @@ class Troppus:
         if self.generatedK>=self.K or not self.q:
             raise StopIteration
         Ysupp,(Yitems,Ytrans_list)=heapq.heappop(self.q)
-        with open("supportvaluesA.txt","a") as f:
+        with open("supportvaluesA.txt","w") as f:
             f.write("%s\n"%(self.l-Ysupp))
         m = 0
         for j in range(self.l_items):
@@ -125,8 +132,9 @@ class TroppusRev:
             self.transactions.append(tran_items)
             for item in tran.strip().split():
                 d[item]+=1
-        aaa = [x for x,y in sorted(list(d.items()),key=lambda x: x[1],reverse=True)] #all the items in descending order of support
-        self.items=list(reversed(aaa))                                               # new line
+        self.items = [x for x,y in sorted(list(d.items()),key=lambda x: x[1],reverse=True)] #all the items in descending order of support
+        self.items = list(reversed(self.items))    # this line sorts the list of items in ascending order of support (comment if needed)                                         
+        self.items_dic = {self.items[i]:"a%s"%(i+1) for i in range(len(self.items))}
         self.l=len(self.transactions) # number of transactions
         self.l_items=len(self.items) #number of items
         self.supplists = defaultdict(lambda:[])
@@ -178,6 +186,7 @@ class TroppusRev:
         if self.generatedK>=self.K or not self.q:
             raise StopIteration
         Ysupp,(Yitems,Ytrans_list)=heapq.heappop(self.q)
+##        print("----------------",pp(Yitems,self.items_dic),1000-Ysupp)        
         with open("supportvaluesB.txt","a") as f:
             f.write("%s\n"%(self.l-Ysupp))
         m = 0
@@ -206,7 +215,10 @@ class TroppusRev:
                         break
                     else:
                         m = next_supp
-                        heapq.heappush(self.q,(self.l-next_supp,(next_items,next_trans_list)))               
+                        heapq.heappush(self.q,(self.l-next_supp,(next_items,next_trans_list)))
+##                        if self.l-Ysupp==next_supp:
+##                            print(pp(Yitems,self.items_dic),self.l-Ysupp,pp(next_items,self.items_dic),next_supp)
+                        
         self.generatedK=self.generatedK+1
         return Yitems
 
@@ -228,7 +240,7 @@ class TopKPietracaprina:
             self.transactions.append(tran_items)
             for item in tran.strip().split():
                 d[item]+=1
-        self.items = [x for x,y in sorted(list(d.items()),key=lambda x: x[1],reverse=True)] #all the items in descending order of support
+        self.items = [x for x,y in sorted(list(d.items()),key=lambda x: x[1],reverse=True)] #all the items in descending order of support       
         self.l=len(self.transactions) # number of transactions
         self.l_items=len(self.items) #number of items
 
@@ -286,7 +298,8 @@ class TopKPietracaprina:
         if self.generatedK>=self.K or not self.q:
             raise StopIteration
         Ysupp,(Yitems,Ytrans_list,Ycore)=heapq.heappop(self.q)
-        with open("supportvaluesA.txt","a") as f:
+##        print("----------------",pp(Yitems,self.items_dic),Ycore,self.l-Ysupp)
+        with open("supportvaluesC.txt","a") as f:
             f.write("%s\n"%(self.l-Ysupp))
         for j in range(Ycore+1,self.l_items+1):
             aj=self.items[j-1]
@@ -297,6 +310,7 @@ class TopKPietracaprina:
                     next_supp=len(next_trans_list)
                     next_core=j
                     heapq.heappush(self.q,(self.l-next_supp,(next_items,next_trans_list,next_core)))
+##                    print(pp(next_items,self.items_dic))                    
         ################################################                   
         self.generatedK=self.generatedK+1
         return Yitems
@@ -320,7 +334,7 @@ class TopKPietracaprinaRev:
             for item in tran.strip().split():
                 d[item]+=1
         self.items = [x for x,y in sorted(list(d.items()),key=lambda x: x[1],reverse=True)] #all the items in descending order of support
-        self.items = list(reversed(self.items))                                             #new line
+##        self.items = list(reversed(self.items))  # the order does not matter                                           #new line
         self.l=len(self.transactions) # number of transactions
         self.l_items=len(self.items) #number of items
 
@@ -381,7 +395,8 @@ class TopKPietracaprinaRev:
         if self.generatedK>=self.K or not self.q:
             raise StopIteration
         Ysupp,(Yitems,Ytrans_list,Ycore)=heapq.heappop(self.q)
-        with open("supportvaluesB.txt","a") as f:
+##        print("----------------",pp(Yitems,self.items_dic),Ycore)
+        with open("supportvaluesD.txt","a") as f:
             f.write("%s\n"%(self.l-Ysupp))
         for j in reversed(range(1,Ycore)):  #new line 
             aj=self.items[j-1]
@@ -393,6 +408,7 @@ class TopKPietracaprinaRev:
                     next_supp=len(next_trans_list)
                     next_core=j
                     heapq.heappush(self.q,(self.l-next_supp,(next_items,next_trans_list,next_core)))
+##                    print(pp(next_items,self.items_dic))                    
         ################################################                   
         self.generatedK=self.generatedK+1
         return Yitems
@@ -401,16 +417,16 @@ class TopKPietracaprinaRev:
 
 
 if __name__=='__main__':
-##    a=Troppus('data.txt',100)
-##    b=TroppusRev('data.txt',1000)
-    a=TopKPietracaprina('data.txt',1000)
-    b=TopKPietracaprinaRev('data.txt',1000)
+##    b=Troppus('data.txt',100)
+    a=TroppusRev('data.txt',100)
+    b=TopKPietracaprina('data.txt',100)
+##    a=TopKPietracaprinaRev('data.txt',100)
     l1 = [e for e in a]
     l2 = [e for e in b]
     print(len(l1),len(l2))
-    with open("supportvaluesA.txt","r") as f:
-        suppA = [e.strip() for e in f.readlines()]
     with open("supportvaluesB.txt","r") as f:
+        suppA = [e.strip() for e in f.readlines()]
+    with open("supportvaluesC.txt","r") as f:
         suppB = [e.strip() for e in f.readlines()]
     for i in range(len(l1)):
         if l1[i]!=l2[i]:
