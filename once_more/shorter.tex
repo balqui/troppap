@@ -185,19 +185,83 @@ frequent sets. Besides, it is often the unexperienced end user
 of the application that has to deal with the problem of adjusting 
 the support just right. 
 
-Several references propose variations of algorithms that, if let 
+The alternative ``top-$k$'' approach was proposed in 
+\cite{han2002mining}: instead of a support bound,
+the user indicates a quantity $k$ of desired closed
+sets and the provided algorithm would return the $k$
+closet sets of most support (with some proviso to 
+handle ties appropriately). Then, several references 
+(discussed in section \ref{sec:discuss} below)
+proposed variations of algorithms that, if let 
 run to the end, would enumerate in order of decreasing support 
 all the closed sets, but allow the user to interrupt the search 
 when either a sufficient number of closed sets has been found 
 or the ``patience'' resource has been exhausted. 
+This approach solves also the ``top-$K$'' problem
+(but not vice versa: the algorithm in \cite{han2002mining}
+does not work in that way).
+
+{
+
+\narrower
+
+
+\added{Paragraphs on Ganter to unify and move to the right place. --JLB}
+
+The way we chose to describe our
+algorithm is on the basis of the approach from~\cite{Gant10}, 
+which is also the lesser
+known (being the older notwithstanding), because it allows for a
+simpler ``local'' view of the process by concentrating only on
+two closures at a time: the current one, $X$, and how to obtain the next.
+
+We give it in Algorithm~\ref{alg:Ganter}.~Essentially, 
+the key point is in an auxiliary operation of adding 
+an item to an itemset: 
+simultaneously, one removes all smaller elements;
+then, the closure of
+the new itemset is found, and is deemed acceptable if it did not add
+any item that would be considered at a later loop. The smallest item
+leading to an acceptable closure leads to the next closure according
+to the lectic ordering, defined below. We are actually reversing the 
+item ordering from \cite{Gant10} in order to better compare to our 
+contribution below.
+
 This note focuses on one specific algorithm,
 \textsc{NextClosure}, that allows one to construct
 the family of closed sets in time linear in the length
-of the family~\cite{Gant10}\footnote{Specifically, 
+of the family~\cite{Gant10}.
+
+footnote: Specifically, it is
 the earliest algorithm to our knowledge to match 
 that description: the 2010 publication \cite{Gant10} 
 is, in fact, a facsimile that clearly displays the 
-original date of 1984.}.
+original date of 1984.
+
+Ganter's \textsc{NextClosure} algorithm is described as 
+Algorithm~\ref{alg:Ganter}; it takes the form of an algorithm 
+to obtain, from a given closure, a ``next'' one. Its author 
+provided mathematical guarantees that prove that, starting 
+with the closure of the empty set, repeated application of 
+\textsc{NextClosure} will traverse completely and without 
+repetition the whole family of closed sets. Equivalently, 
+the binary relation between the input and the output closures, 
+seen as a graph on the family of all closed sets, is a path 
+connecting all of them with no branching or loops.
+
+\added{This last sentence is intended to start alluding to
+the future perspective of "gating". --JLB}
+
+
+This algorithm
+does not traverse itemsets by decreasing support\deleted{; neither 
+do the other ones mentioned above that follow a
+related structure}. (WHICH ALGS REFERS THIS SENTENCE TO? --JLB
+
+
+}
+
+
 We aim at variants that, if applied to a closure space 
 obtained from a dataset, would return the closed sets in
 order of decreasing support. While the algorithmic look
@@ -226,25 +290,106 @@ as items thus sparing indexitis.}
 
 \section{Preliminaries}\label{sec:Prel}
 
+\added{Attempt at right-to-left version of current Troppus follows. 
+But here $\U$ is formed by $x$'s and in the algorithms by $a$'s. --JLB}
+
+Let $\U=\{x_1,\ldots,x_n\}$ be the set of items in order of 
+% \deleted{descending} 
+\emph{ascending} support, i.e., 
+for all $1 \leq i < j \leq n$ we have $\s(x_i) \leq \s(x_j)$. 
+We also extend the inequality symbol to the items proper,
+according to the support: we write $x_i < x_j$ when $i < j$.
+Note that supports, and therefore the ordering in $\U$, depend 
+on the dataset. One can easily count the support of all singletons 
+in a single traversal of the dataset and, then, sorting them requires 
+$\mathcal{O}(n \log n)$ time steps. For the items having the same 
+support the order can be fixed arbitrarily. 
+
+\added{However, for the example below, the itemsets $ae$ and $be$ 
+have the same support and we should take care that whatever order 
+they are reported in by the algorithm does not puzzle the reader, 
+who will be puzzled enough by the intricacies of the proof. --JLB}
+
 \added{Pending definitions: closure? support? $X$ \emph{comes before} $Y$,
 denoted $X\bef Y$? lectic ordering? (can we do without? but we need 
 a tie-breaking criterion anyway for coinciding supports)
 I would like to reduce the number of involved notions and notations
 to the bare minimum. --JLB}
 
-Ganter's \textsc{NextClosure} algorithm is described as 
-Algorithm~\ref{alg:Ganter}; it takes the form of an algorithm 
-to obtain, from a given closure, a ``next'' one. Its author 
-provided mathematical guarantees that prove that, starting 
-with the closure of the empty set, repeated application of 
-\textsc{NextClosure} will traverse completely and without 
-repetition the whole family of closed sets. Equivalently, 
-the binary relation between the input and the output closures, 
-seen as a graph on the family of all closed sets, is a path 
-connecting all of them with no branching or loops.
 
-\added{This last sentence is intended to start alluding to
-the future perspective of "gating". --JLB}
+
+Once the order for the items has been set, we compare itemsets according to the so-called \emph{lectic} ordering \cite{Gant10}:
+
+\begin{definition}
+\label{df:lectic}
+Let $\U$ be the set of items.
+\begin{enumerate}
+\item 
+For an item $x \in \U$, the $x$-\emph{suffix} of an itemset $X \subseteq \U$ is 
+the itemset $Y = \{ y\in X \mid y > x\}$.
+\item 
+For itemsets $X$ and $Y$ in $\U$, with $X\neq Y$,
+$X < Y$ if there is $x\in Y\backslash X$ such that
+the $x$-suffixes of $X$ and $Y$ coincide.
+\end{enumerate}
+\end{definition}
+
+Accordingly, $X\leq Y$ means that either $X < Y$ or $X = Y$.
+Note that the least item $x$ such that 
+the $x$-suffixes of $X$ and $Y$ coincide
+is always uniquely defined for $X\neq Y$,
+and it must belong to exactly one of them. Moreover, when restricted to singleton itemsets, this ordering coincides with the underlying ordering of the items themselves.
+
+
+This ordering coincides with the
+standard ordering of lists provided that they are kept sorted
+in decreasing order in the implementations.
+This is the same ordering as would be obtained from the comparison
+$$\sum^p_{l=1} 2^{i_l-1} <\sum^q_{l=1} 2^{j_l-1},$$
+\noindent where $X=\{x_{i_1},\ldots x_{i_p}\}$ and $Y=\{y_{j_1}, \ldots y_{j_q}\}$,
+with $1\leq i_1<\cdots<i_p \leq n$, $1\leq j_1<\cdots<j_q \leq n$.
+%[REDELETED and $k,p \geq 0$]
+The usefulness of this ordering for closure mining is widely
+demonstrated, e.g.~\cite{Gant10,UAUA03,ZakHsi05}.
+
+\begin{remark}\label{rem:lecticorder}
+Given $X,Y$ in $\U$, $X \subset Y$ implies $X<Y$.
+\end{remark}
+
+While the lectic ordering plays a central role in closure mining and will be instrumental in the design of our algorithms, it does not reflect the priority criterion we wish to impose on the output.
+The ordering we are after is by decreasing support. 
+%\st{Yet, in case of equal supports, we need to establish which itemset goes first. Of course, a natural option is to use the existing ordering to break ties. }
+We rely on the lectic ordering introduced above to break ties between itemsets of equal support.
+Thus, we get the following ordering of itemsets: we
+say that $X$ \emph{comes before} $Y$, denoted $X\bef Y$, if 
+either $\s(X)>\s(Y)$, or $\s(X)=\s(Y)$ and $X < Y$. Note that 
+$x_i \bef x_j$ if and only if $i<j$, which means that, 
+for singletons, both orderings coincide. 
+
+We illustrate the two orderings with an example.
+In it, as along the paper, we use juxtaposition for itemsets in order to ease readability; i.e., $abe$ stands for $\{a,b,e\}$; likewise, we do not distinguish
+notationally items from singleton itemsets, leaving the easy disambiguation
+to the context.
+
+\begin{example}\label{example}
+Let us consider a dataset with 24 transactions over a universe $\U$ of 5 attributes $\{a,b,c,d,e\}$, which we detail in the sequel: 
+$\{abcde,bcde \times 2,abe,cde,be,ae \times 3,ab \times 4,cd \times 6, b \times 2, a \times 3\}$; of course, with ${}\times M$ we mean that the transaction 
+appears $M$ times. Note that $\s(c)=\s(d)=10$, and say we choose $c$ to be smaller than $d$. Then $a<b<c<d<e$, and  $ab$ is lectically smaller than $c$. Nevertheless, $c$ comes before $ab$ because $\s(c)=10>6=\s(ab)$.
+\end{example}
+
+\begin{definition}\label{def:closed}
+Given $X$ in $\U$, we say that $X$ is \emph{closed} if $X = \cl{X}$, where 
+$$\cl{X} = \{x \in \U \mid \s(X \cup \{x\}) = \s(X)  \}$$
+\end{definition}
+
+We denote as $\C=\{X_1,\ldots,X_m\}$ the list of all closed 
+sets of % \textcolor{red}
+{positive} support in the given dataset,
+in the ordering we want to traverse them: for $i<j$, 
+$X_i \bef X_j$. Note that $X_1$ is the closure of the emptyset, which always has maximum support: the total number of transactions. 
+
+
+
 
 \begin{algorithm}
   \caption{Ganter's \textsc{NextClosure}}\label{alg:Ganter}
@@ -263,27 +408,6 @@ the future perspective of "gating". --JLB}
 \end{algorithm}
 
 
-\added{Preserve something of the next paragraphs? --JLB}
-
-The way we chose to describe our
-algorithm is on the basis of the approach from~\cite{Gant10}, 
-which is also the lesser
-known (being the older notwithstanding), because it allows for a
-simpler ``local'' view of the process by concentrating only on
-two closures at a time: the current one, $X$, and how to obtain the next.
-
-We give it in Algorithm~\ref{alg:Ganter}.~Essentially, 
-the key point is in an auxiliary operation of adding 
-an item to an itemset: 
-simultaneously, one removes all smaller elements;
-then, the closure of
-the new itemset is found, and is deemed acceptable if it did not add
-any item that would be considered at a later loop. The smallest item
-leading to an acceptable closure leads to the next closure according
-to the lectic ordering, defined below. We are actually reversing the 
-item ordering from \cite{Gant10} in order to better compare to our 
-contribution below.
-
 (Here, and along the paper, 
 $Y\backslash X$ denotes the items of $Y$ 
 that do not belong to $X$.)
@@ -294,6 +418,8 @@ that do not belong to $X$.)
 
 \added{Consider starting this section with the description 
 of the yacaree algorithm. Copied here just in case. --JLB}
+
+\added{Or move all this to the discussion section} 
 
 The yacaree option... unpublished so far as algorithm but 
 available as open source... basically we add the closures to a heap...
@@ -330,24 +456,6 @@ and is increased along the way when the growth of the heap threatens
 to overflow the memory. Of course, the main issue to be dealt with
 is that of avoiding repetitions, which is done via a rather basic
 but still considerably efficient hashing scheme. 
-
-\added{Attempt at right-to-left version of current Troppus follows. 
-But here $\U$ is formed by $x$'s and in the algorithms by $a$'s. --JLB}
-
-Let $\U=\{x_1,\ldots,x_n\}$ be the set of items in order of 
-% \deleted{descending} 
-\emph{ascending} support, i.e., 
-for all $1 \leq i < j \leq n$ we have $\s(x_i) \leq \s(x_j)$. 
-Note that supports, and therefore the ordering in $\U$, depend 
-on the dataset. One can easily count the support of all singletons 
-in a single traversal of the dataset and, then, sorting them requires 
-$\mathcal{O}(n \log n)$ time steps. For the items having the same 
-support the order can be fixed arbitrarily. 
-
-\added{However, for the example below, the itemsets $ae$ and $be$ 
-have the same support and we should take care that whatever order 
-they are reported in by the algorithm does not puzzle the reader, 
-who will be puzzled enough by the intricacies of the proof. --JLB}
 
 Being much in the spirit of \textsc{NextClosure}, our variant
 is reasonably simple. 
@@ -396,30 +504,6 @@ small elements are discarded; we will revisit these
 closures later, in due time, thanks to those smaller 
 elements.
 
-We will argue
-the following: given two extensions of $X$ with 
-different items $x$ and $y$,
-where $x\bef y$, if the support obtained 
-extending with $y$ is less than extending with $x$,
-we do not need to care for it: it agrees enough with the
-lectic ordering and will be picked up again. But, if it
-is more, we will need to remember both,
-as the lectic ordering will not
-go back and pick up the extension with $x$ after visiting
-that with $y$. Of course, these statements are
-not self-evident, and are indicated here just as explanation:
-formal proofs are given below.
-
-Thus, we maintain a ``local list'' $l$ of itemsets that
-we must keep: those extensions that lead to higher support
-than the previous ones even though the item which is used 
-to trigger the extension has lower support as singleton.
-
-As a consequence, closures already visited may be 
-hit again later. If the next step should lead us to
-higher support, we just abandon the expansions process
-as it and all the remaining ones have been already treated earlier.
-
 All this can be gathered formally in the following algorithm. Here we
 employ the shorthand ``report $X$'' to indicate that a new closure $X$
 has been found. It would be implemented by adding it to a list of 
@@ -461,6 +545,30 @@ take that into account. --JLB}
   \end{algorithmic}
 \end{algorithm}
 
+We will argue
+the following: given two extensions of $X$ with 
+different items $x$ and $y$,
+where $x\bef y$, if the support obtained 
+extending with $y$ is less than extending with $x$,
+we do not need to care for it: it agrees enough with the
+lectic ordering and will be picked up again. But, if it
+is more, we will need to remember both,
+as the lectic ordering will not
+go back and pick up the extension with $x$ after visiting
+that with $y$. Of course, these statements are
+not self-evident, and are indicated here just as explanation:
+formal proofs are given below.
+
+Thus, we maintain a ``local list'' $l$ of itemsets that
+we must keep: those extensions that lead to higher support
+than the previous ones that we kept.
+
+As a consequence, closures already visited may be 
+hit again later. If the next step should lead us to
+higher support, we just abandon the expansions process
+as that step, and everything to be considered to enter
+the heap due to it, have been already treated earlier.
+
 Together with the updating of $m$ when a closure enters the local
 list $l$, Condition (3) means that subsequent additions to the local 
 list enter it with increasing supports.
@@ -479,10 +587,31 @@ Condition (2) is fully analogous to the one applied by Ganter and
 plays a similar role; we still must ensure that it does also in the
 new context.
 
+During the run of the algorithm, some of the closures 
+computed will be added to the local list, and some others 
+will be discarded, either because
+% 
+  their support is larger than the support of the 
+  current working closure $X$ (\textsl{Condition~1}), 
+or 
+  because they have added to the closure some element 
+  smaller than the current working item $x$ 
+  (\textsl{Condition 2}), 
+or
+  because they would not comply with the increasing 
+  support along the local list (\textsl{Condition 3}). 
+
+In the first case, the for loop is 
+%forcibly %look for an alternative adverb or use no adverb
+abandoned and no further items are visited 
+for the current working itemset $X$. 
+
+\added{Find the right place for these two paragraphs.}
+
 The local list $l$ will facilitate our mathematical validation
 of the algorithm. However, note that $h$ is made as the successive
 unions of local lists; and that neither $h$ nor $l$ are \emph{consulted}
-during the loop. Hence, in our implementation, the elements of the
+inside the loop. Hence, in our implementation, the elements of the
 local list go directly into the heap instead. We write the algorithm
 so as to have a name ready for the batch of closures
 that get added to the heap upon processing $X$, as this notation will
@@ -512,28 +641,6 @@ is shown in Figure \ref{fig:lattice}.
 \end{center}
 \end{figure}
 
-
-During the run of the algorithm, some of the closures 
-computed will be added to the local list, and some others 
-will be discarded, either because
-% 
-  their support is larger than the support of the 
-  current working closure $X$ (\textsl{Condition~1}), 
-or 
-  because they have added to the closure some element 
-  smaller than the current working item $x$ 
-  (\textsl{Condition 2}), 
-or
-  because they would not comply with the increasing 
-  support along the local list (\textsl{Condition 3}). 
-
-In the first case, the for loop is 
-%forcibly %look for an alternative adverb or use no adverb
-abandoned and no further items are visited 
-for the current working itemset $X$. 
-
-\added{These two paragraphs are fully general. Maybe
-the example is not the right place for them.}
 
 In the sequel we give, for each closed set $X$, 
 a detailed explanation of how the local list is 
@@ -717,82 +824,6 @@ left within the Troppus algorithm.}
 
 
 
-
-Once the order for the items has been set, we compare itemsets according to the so-called \emph{lectic} ordering \cite{Gant10}:
-
-\begin{definition}
-\label{df:lectic}
-Let $\U$ be the set of items.
-\begin{enumerate}
-\item 
-For an item $x \in \U$, the $x$-\emph{suffix} of an itemset $X \subseteq \U$ is 
-the itemset $Y = \{ y\in X \mid y > x\}$.
-\item 
-For itemsets $X$ and $Y$ in $\U$, with $X\neq Y$,
-$X < Y$ if there is $x\in Y\backslash X$ such that
-the $x$-suffixes of $X$ and $Y$ coincide.
-\end{enumerate}
-\end{definition}
-
-Accordingly, $X\leq Y$ means that either $X < Y$ or $X = Y$.
-Note that the least item $x$ such that 
-the $x$-suffixes of $X$ and $Y$ coincide
-is always uniquely defined for $X\neq Y$,
-and it must belong to exactly one of them. Moreover, when restricted to singleton itemsets, this ordering coincides with the underlying ordering of the items themselves.
-
-
-This ordering coincides with the
-standard ordering of lists provided that they are kept sorted
-in decreasing order in the implementations.
-This is the same ordering as would be obtained from the comparison
-$$\sum^p_{l=1} 2^{i_l-1} <\sum^q_{l=1} 2^{j_l-1},$$
-\noindent where $X=\{x_{i_1},\ldots x_{i_p}\}$ and $Y=\{y_{j_1}, \ldots y_{j_q}\}$,
-with $1\leq i_1<\cdots<i_p \leq n$, $1\leq j_1<\cdots<j_q \leq n$.
-%[REDELETED and $k,p \geq 0$]
-The usefulness of this ordering for closure mining is widely
-demonstrated, e.g.~\cite{Gant10,UAUA03,ZakHsi05}.
-
-\begin{remark}\label{rem:lecticorder}
-Given $X,Y$ in $\U$, $X \subset Y$ implies $X<Y$.
-\end{remark}
-
-While the lectic ordering plays a central role in closure mining and will be instrumental in the design of our algorithms, it does not reflect the priority criterion we wish to impose on the output.
-The ordering we are after is by decreasing support. 
-%\st{Yet, in case of equal supports, we need to establish which itemset goes first. Of course, a natural option is to use the existing ordering to break ties. }
-We rely on the lectic ordering introduced above to break ties between itemsets of equal support.
-Thus, we get the following ordering of itemsets: we
-say that $X$ \emph{comes before} $Y$, denoted $X\bef Y$, if 
-either $\s(X)>\s(Y)$, or $\s(X)=\s(Y)$ and $X < Y$. Note that 
-$x_i \bef x_j$ if and only if $i<j$, which means that, 
-for singletons, both orderings coincide. 
-
-We illustrate the two orderings with an example.
-In it, as along the paper, we use juxtaposition for itemsets in order to ease readability; i.e., $abe$ stands for $\{a,b,e\}$; likewise, we do not distinguish
-notationally items from singleton itemsets, leaving the easy disambiguation
-to the context.
-
-\begin{example}\label{example}
-Let us consider a dataset with 24 transactions over a universe $\U$ of 5 attributes $\{a,b,c,d,e\}$, which we detail in the sequel: 
-$\{abcde,bcde \times 2,abe,cde,be,ae \times 3,ab \times 4,cd \times 6, b \times 2, a \times 3\}$; of course, with ${}\times M$ we mean that the transaction 
-appears $M$ times. Note that $\s(c)=\s(d)=10$, and say we choose $c$ to be smaller than $d$. Then $a<b<c<d<e$, and  $ab$ is lectically smaller than $c$. Nevertheless, $c$ comes before $ab$ because $\s(c)=10>6=\s(ab)$.
-\end{example}
-
-\begin{definition}\label{def:closed}
-Given $X$ in $\U$, we say that $X$ is \emph{closed} if $X = \cl{X}$, where 
-$$\cl{X} = \{x \in \U \mid \s(X \cup \{x\}) = \s(X)  \}$$
-\end{definition}
-
-We denote as $\C=\{X_1,\ldots,X_m\}$ the list of all closed 
-sets of % \textcolor{red}
-{positive} support in the given dataset,
-in the ordering we want to traverse them: for $i<j$, 
-$X_i \bef X_j$. Note that $X_1$ is the closure of the emptyset, which always has maximum support: the total number of transactions. 
-
-
-This algorithm
-does not traverse itemsets by decreasing support\deleted{; neither 
-do the other ones mentioned above that follow a
-related structure}.
 
 
 The shape of our running times in practice shows that indeed
@@ -1221,7 +1252,9 @@ which needs time $\mathcal{O}(\log|h|)$, and
 \end{itemize}
 \end{itemize}
 
+\section{Discussion}\label{sec:discuss}
 
+XXXXX
 
 
 \bibliographystyle{plain}
